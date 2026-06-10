@@ -29,6 +29,12 @@ TMP_ROOT = PROJECT_ROOT / ".tmp"
 # Hub steps (P5) run there with cwd=HUB so the Hub's .env (Supabase, sheet URLs, Tally) loads.
 HUB_ROOT = Path(os.environ.get("RECEIVABLES_HUB_PATH", r"d:/Agentic AI Tools/Orange Receivables Hub"))
 
+# "From last pending" re-fetches this many already-synced days BEFORE the watermark so vouchers
+# edited/re-allocated in Tally after they first synced get re-pulled and upserted by the
+# content-aware push (no duplicates; unchanged rows are skipped so it stays fast). 0 = pure forward
+# sync (legacy). Env-tunable via SYNC_OVERLAP_DAYS.
+OVERLAP_DAYS = max(0, int(os.environ.get("SYNC_OVERLAP_DAYS", "30")))
+
 Phase = Literal["fetch", "push"]
 
 # ---- per-master script registry ----------------------------------------------------------------
@@ -140,8 +146,14 @@ class Step:
     chunk_idx: int = 0          # 0-based index within (master, company)
     chunk_total: int = 1
     chunk_label: str = ""       # e.g. "Apr 2026" or "" for non-chunked
-    from_date: str | None = None  # DD-MM-YYYY
-    to_date: str | None = None
+    from_date: str | None = None  # DD-MM-YYYY (this chunk's start)
+    to_date: str | None = None    # this chunk's end
+    # run_from = the overall start the whole (master, company) sync was computed from — i.e. the
+    # actual --from after the overlap rewind, constant across all chunks. from_date above is just
+    # THIS chunk's start, so the last chunk's from_date is the month start, not the run start. We
+    # persist run_from on completion so "what did From-last-pending actually fetch from?" is exact
+    # and auditable, never inferred.
+    run_from: str | None = None
     input_file: str | None = None  # for push only
     reconcile: bool = False
     status: Literal["pending", "running", "done", "error", "skipped"] = "pending"
@@ -159,6 +171,10 @@ class Step:
     argv: list[str] | None = None  # explicit command for a hub step (overrides _build_cmd)
     cwd: str | None = None      # working dir override (defaults to PROJECT_ROOT)
     env_extra: dict[str, str] | None = None  # extra env vars merged over os.environ for this step
+    # Sub-progress for long hub steps (e.g. process_data → 60-120s). 0..1, monotonic. The runner
+    # updates these by matching known phase markers in stdout; the UI shows a second progress bar.
+    progress: float = 0.0
+    progress_label: str = ""
 
 
 @dataclass
@@ -195,7 +211,13 @@ def build_steps(state: dict[str, Any], plans: list[MasterPlan], companies: list[
             else:  # "last_pending"
                 last = state_mod.get_last_sync(state, plan.master, company)
                 if last and last.get("to_date"):
-                    start = parse_dmy(last["to_date"]) + timedelta(days=1)
+                    # Re-fetch a rolling buffer of already-synced days BEFORE the watermark, so a
+                    # voucher edited/re-allocated in Tally after it first synced (e.g. an on-account
+                    # receipt later allocated against an invoice) is re-pulled and the content-aware
+                    # push UPSERTS it (replaces, never duplicates — fast: unchanged rows are skipped).
+                    # Tunable via SYNC_OVERLAP_DAYS (0 disables = pure forward sync).
+                    start = parse_dmy(last["to_date"]) + timedelta(days=1) - timedelta(days=OVERLAP_DAYS)
+                    start = max(start, fy_start)
                 else:
                     start = fy_start
                 end = today
@@ -204,17 +226,19 @@ def build_steps(state: dict[str, Any], plans: list[MasterPlan], companies: list[
                 continue
 
             chunks = month_chunks(start, end)
+            run_from_s = fmt_dmy(start)  # the real --from for this (master, company), post-overlap
             for idx, (cs, ce) in enumerate(chunks):
                 chunk_label = cs.strftime("%b %Y")
                 tmp_in = _tmp_path(m, company, f"{cs:%Y%m}")
                 steps.append(Step(
                     plan.master, company, "fetch", idx, len(chunks), chunk_label,
-                    from_date=fmt_dmy(cs), to_date=fmt_dmy(ce), input_file=str(tmp_in),
+                    from_date=fmt_dmy(cs), to_date=fmt_dmy(ce), run_from=run_from_s,
+                    input_file=str(tmp_in),
                 ))
                 steps.append(Step(
                     plan.master, company, "push", idx, len(chunks), chunk_label,
-                    from_date=fmt_dmy(cs), to_date=fmt_dmy(ce), input_file=str(tmp_in),
-                    reconcile=plan.reconcile,
+                    from_date=fmt_dmy(cs), to_date=fmt_dmy(ce), run_from=run_from_s,
+                    input_file=str(tmp_in), reconcile=plan.reconcile,
                 ))
     return steps
 
@@ -240,12 +264,20 @@ def hub_step(step_type: str, label: str, argv: list[str], env_extra: dict[str, s
                 argv=argv, cwd=str(HUB_ROOT), env_extra={"PYTHONUTF8": "1", **(env_extra or {})})
 
 
-def process_data_step() -> Step:
-    """Hub step: re-run process_data.py (OUTPUT_MODE=supabase) to refresh the live dashboard."""
+def process_data_step(as_of_date: str | None = None) -> Step:
+    """Hub step: re-run process_data.py (OUTPUT_MODE=supabase) to refresh the live dashboard.
+
+    as_of_date (YYYY-MM-DD) pins process_data's reference 'today' (its AS_OF_DATE env hook) to
+    the date actually synced from Tally, so the dashboard's as-of label can never run ahead of the
+    data coverage. Unset → process_data falls back to real today (legacy behaviour).
+    """
     py = sys.executable or "python"
+    env_extra = {"OUTPUT_MODE": "supabase"}
+    if as_of_date:
+        env_extra["AS_OF_DATE"] = as_of_date
     return hub_step("hub_process_data", "Push to dashboard (process_data → Supabase)",
                     [py, str(HUB_ROOT / "scripts" / "process_data.py")],
-                    env_extra={"OUTPUT_MODE": "supabase"})
+                    env_extra=env_extra)
 
 
 def reconcile_step(as_of: str, tally_cache: str, ledger_map: str,
@@ -346,6 +378,38 @@ class Runner:
 
     # ---- runner internals ----------------------------------------------------------------
 
+    @staticmethod
+    def _update_process_data_progress(step: Step, line: str, snapshots_built: int, snapshots_written: int) -> tuple[int, int]:
+        """Match known process_data.py stdout markers and bump step.progress/step.progress_label.
+
+        process_data is ~60-120s with 3 snapshots (default / fy2526 / fy2627). Phase weights
+        are monotonic guesses calibrated against typical run output. snapshots_built counts
+        "=== Building snapshot:" lines; snapshots_written counts "-> Wrote snapshot" lines.
+        """
+        def bump(p: float, label: str) -> None:
+            if p > step.progress:
+                step.progress = p
+            step.progress_label = label
+
+        if "Loading Google Sheets" in line:
+            bump(0.03, "Loading Google Sheets…")
+        elif "[sheets] fetched" in line:
+            bump(0.20, "Sheets loaded")
+        elif "Building customer list" in line:
+            bump(0.28, "Building customer list…")
+        elif "=== Building snapshot:" in line:
+            snapshots_built += 1
+            pct = {1: 0.35, 2: 0.55, 3: 0.75}.get(snapshots_built, step.progress)
+            bump(pct, f"Building snapshot {snapshots_built}/3…")
+        elif "Writing" in line and "snapshot" in line:
+            bump(0.88, "Writing snapshots…")
+        elif "Wrote snapshot" in line or "Wrote customers" in line:
+            snapshots_written += 1
+            bump(min(0.97, 0.88 + 0.03 * snapshots_written), "Pushing to Supabase…")
+        elif line.startswith("Done!"):
+            bump(1.0, "Complete")
+        return snapshots_built, snapshots_written
+
     def _emit(self, ev: ProgressEvent) -> None:
         with self._lock:
             self._events.append(ev)
@@ -386,6 +450,25 @@ class Runner:
                 return True
         return False
 
+    def _synced_through_iso(self) -> str | None:
+        """Latest to_date across successful tally PUSH steps, as YYYY-MM-DD (process_data AS_OF_DATE).
+
+        Pins the dashboard's as-of to the data actually synced so the label can't run ahead of the
+        coverage (the off-by-one where process_data stamped real today while the sync lagged a day).
+        Returns None for snapshot-only syncs (no date-range push) — process_data then uses real today.
+        """
+        latest: date | None = None
+        for s in self.steps:
+            if s.step_type != "tally" or s.phase != "push" or s.status != "done" or not s.to_date:
+                continue
+            try:
+                d = parse_dmy(s.to_date)
+            except ValueError:
+                continue
+            if latest is None or d > latest:
+                latest = d
+        return latest.isoformat() if latest else None
+
     def _maybe_auto_process_data(self) -> None:
         if not self.auto_process_data or self._cancel.is_set():
             return
@@ -397,10 +480,12 @@ class Runner:
             self._emit(ProgressEvent(kind="log",
                        line="↻ Auto-push skipped: nothing changed (0 appended, 0 deleted)."))
             return
-        step = process_data_step()
+        as_of = self._synced_through_iso()
+        step = process_data_step(as_of_date=as_of)
         self.steps.append(step)
+        as_of_note = f" (as-of pinned to synced-through {as_of})" if as_of else ""
         self._emit(ProgressEvent(kind="log",
-                   line="↻ Changes detected — auto-running process_data → Supabase to refresh the dashboard…"))
+                   line=f"↻ Changes detected — auto-running process_data → Supabase to refresh the dashboard{as_of_note}…"))
         self._run_step(len(self.steps) - 1, step)
 
     def _run_step(self, idx: int, step: Step) -> None:
@@ -414,10 +499,16 @@ class Runner:
         self._log(f"$ {' '.join(cmd)}")
 
         run_cwd = step.cwd or str(PROJECT_ROOT)
-        run_env = {**os.environ, **step.env_extra} if step.env_extra else None
+        # Force child stdout/stderr to UTF-8. When stdout is a pipe (as here) Python defaults to the
+        # locale codec (cp1252 on Windows), which can't encode the non-ASCII chars the fetch scripts
+        # print (e.g. the "→" in billwise's progress lines) → UnicodeEncodeError → exit code 1. Hub
+        # steps already set PYTHONUTF8=1; apply it to every step so the whole class of bug is gone.
+        run_env = {**os.environ, "PYTHONUTF8": "1", "PYTHONIOENCODING": "utf-8", **(step.env_extra or {})}
 
         last_json_line: str | None = None
         rc = -1
+        pd_built = 0
+        pd_written = 0
         try:
             proc = subprocess.Popen(
                 cmd,
@@ -425,6 +516,8 @@ class Runner:
                 stderr=subprocess.STDOUT,
                 bufsize=1,
                 text=True,
+                encoding="utf-8",
+                errors="replace",
                 cwd=run_cwd,
                 env=run_env,
             )
@@ -437,6 +530,8 @@ class Runner:
                 self._emit(ProgressEvent(kind="log", step_index=idx, line=line))
                 if line.startswith("{") and line.rstrip().endswith("}"):
                     last_json_line = line
+                if step.step_type == "hub_process_data":
+                    pd_built, pd_written = self._update_process_data_progress(step, line, pd_built, pd_written)
             rc = proc.wait()
         except Exception as exc:
             step.status = "error"
@@ -467,11 +562,16 @@ class Runner:
         if step.step_type == "tally":
             state_mod.record_step_duration(self.state, step.master, step.phase, step.company, step.elapsed)
             if step.phase == "push":
-                # Watermark advances after a successful per-master push only.
-                state_mod.record_completion(self.state, step.master, step.company, step.to_date)
+                # Watermark advances after a successful per-master push only. run_from is the same
+                # for every chunk, so the final (last-chunk) write lands the true run start + end.
+                state_mod.record_completion(self.state, step.master, step.company, step.to_date,
+                                            from_date=step.run_from)
             state_mod.save_state(self.state)
 
         step.status = "done"
+        if step.step_type == "hub_process_data":
+            step.progress = 1.0
+            step.progress_label = "Complete"
         self._emit(ProgressEvent(kind="step_done", step_index=idx))
 
     def _build_cmd(self, m: MasterDef | None, step: Step) -> list[str]:

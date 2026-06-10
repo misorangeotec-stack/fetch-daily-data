@@ -73,11 +73,17 @@ def record_step_duration(state: dict[str, Any], master: str, phase: str, company
             del bucket[: len(bucket) - HISTORY_WINDOW]
 
 
-def record_completion(state: dict[str, Any], master: str, company: str, to_date: str | None) -> None:
-    state["last_sync"].setdefault(master, {})[company] = {
+def record_completion(state: dict[str, Any], master: str, company: str, to_date: str | None,
+                      from_date: str | None = None) -> None:
+    rec: dict[str, Any] = {
         "to_date": to_date,
         "completed_at": now_ist().isoformat(timespec="seconds"),
     }
+    # from_date = the actual --from this run fetched from (post-overlap), so "From last pending"
+    # is auditable after the fact instead of inferred. Snapshot masters pass None → key omitted.
+    if from_date is not None:
+        rec["from_date"] = from_date
+    state["last_sync"].setdefault(master, {})[company] = rec
 
 
 def get_last_sync(state: dict[str, Any], master: str, company: str) -> dict[str, Any] | None:

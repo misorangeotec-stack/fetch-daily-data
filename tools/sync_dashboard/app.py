@@ -62,9 +62,9 @@ def inject_css() -> None:
     st.markdown(
         f"""
         <style>
-          /* Tighten default padding so the dashboard feels denser */
+          /* Tighten default padding so the dashboard feels denser (but leave headroom for the tab bar — too tight clips its top edge) */
           .block-container {{
-            padding-top: 1.6rem;
+            padding-top: 3.5rem;
             padding-bottom: 4rem;
             max-width: 1180px;
           }}
@@ -210,22 +210,32 @@ def watermark_html(state: dict, master_key: str, selected_companies: list[str]) 
     have = [s for s in syncs if s and s.get("completed_at")]
     if not have:
         return f'<span class="pill err"><span class="dot"></span>Never synced</span>'
-    oldest = min(s["completed_at"] for s in have)[:16].replace("T", " ")
+    _oldest_raw = min(s["completed_at"] for s in have)
+    try:
+        oldest = datetime.fromisoformat(_oldest_raw).strftime("%d-%m-%Y %H:%M")
+    except ValueError:
+        oldest = _oldest_raw[:16].replace("T", " ")
     if len(have) < len(selected_companies):
         pill = f'<span class="pill warn"><span class="dot"></span>Partial · oldest {oldest}</span>'
     else:
         pill = f'<span class="pill ok"><span class="dot"></span>{oldest}</span>'
 
-    # "Data through" — find oldest to_date across selected companies (most conservative)
+    # "Data through" — find oldest to_date across selected companies (most conservative).
+    # When the last run's from_date was recorded, show the actual pulled range instead, so
+    # "From last pending" is auditable at a glance.
     to_date_strs = [s["to_date"] for s in have if s.get("to_date")]
+    from_date_strs = [s["from_date"] for s in have if s.get("from_date")]
     data_through = ""
     if to_date_strs:
         try:
             oldest_to = min(to_date_strs, key=lambda d: datetime.strptime(d, "%d-%m-%Y"))
+            if from_date_strs:
+                newest_from = max(from_date_strs, key=lambda d: datetime.strptime(d, "%d-%m-%Y"))
+                inner = f'Last pull <b style="color:#1C1917">{newest_from} → {oldest_to}</b>'
+            else:
+                inner = f'Synced up to <b style="color:#1C1917">{oldest_to}</b>'
             data_through = (
-                f'<div style="font-size:0.78rem;color:{MUTED};margin-top:0.3rem;">'
-                f'Synced up to <b style="color:#1C1917">{oldest_to}</b>'
-                f'</div>'
+                f'<div style="font-size:0.78rem;color:{MUTED};margin-top:0.3rem;">{inner}</div>'
             )
         except ValueError:
             pass
@@ -243,7 +253,7 @@ def init_session() -> None:
     ss.setdefault("steps", None)
     ss.setdefault("run_total_estimate", 0.0)
     ss.setdefault("run_started_at", None)
-    ss.setdefault("master_selected", {m: False for m in UI_ORDER})
+    ss.setdefault("master_selected", {m: True for m in UI_ORDER})
     ss.setdefault("audit_runner", None)
     ss.setdefault("audit_results", None)
     ss.setdefault("audit_log", [])   # list of human-readable progress strings
@@ -504,6 +514,7 @@ def _master_blurb(mkey: str) -> str:
         "credit_limit":      "Debtor master · credit period, limit, openings",
         "ledger_master":     "All ledgers snapshot → Ledger Master sheet",
         "stock_item_master": "All stock items snapshot → Stock Item Master sheet",
+        "billwise":          "Per-ledger open bills snapshot → Bill-wise Outstanding sheet",
     }[mkey]
 
 
@@ -565,6 +576,16 @@ def render_running_view(state: dict) -> None:
 
     bar_caption = _step_caption(running_step) if running_step else ("Done" if not is_running else "Finalizing…")
     st.progress(pct, text=bar_caption)
+
+    # Sub-progress for the "Push to dashboard" hub step (process_data → Supabase, ~60-120s)
+    if running_step is not None and running_step.step_type == "hub_process_data":
+        sub_pct = max(running_step.progress, 0.02)
+        sub_label = running_step.progress_label or "Starting…"
+        sub_elapsed = time.time() - (running_step.started_at or time.time())
+        st.progress(
+            sub_pct,
+            text=f"↻ Push to dashboard — {sub_label}  ·  {sub_pct*100:.0f}%  ·  {fmt_seconds(sub_elapsed)} elapsed",
+        )
 
     # Summary card (only when complete)
     if not is_running:
