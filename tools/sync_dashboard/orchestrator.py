@@ -313,6 +313,24 @@ def cache_build_step(as_of: str, master_dump: str, out_cache: str,
     return hub_step("hub_cache_build", f"Build Tally cache (as-of {as_of})", argv)
 
 
+# ---- local report steps (read-only, no Tally) --------------------------------------------------
+
+def risk_register_export_step(fiscal_year: str = "default") -> Step:
+    """Local step: export the Customer Risk Register to MISC/risk-register-<date>.xlsx.
+
+    Read-only — reads the receivables `customers` table from Supabase and writes a
+    local .xlsx. Not a Tally master, so step_type != "tally" (the Runner runs it via
+    `argv` and never advances the daily sync watermark). Runs in PROJECT_ROOT so the
+    project .env (SUPABASE_URL / SUPABASE_SERVICE_KEY) loads.
+    """
+    py = sys.executable or "python"
+    script = str(Path(__file__).resolve().parent / "export_risk_register.py")
+    argv = [py, script, "--fiscal-year", fiscal_year]
+    return Step(master="", company="", phase="push", step_type="export_risk_register",
+                label="Export Risk Register (Excel → MISC)", argv=argv,
+                cwd=str(PROJECT_ROOT), env_extra={"PYTHONUTF8": "1"})
+
+
 # ---- ETA -----------------------------------------------------------------------------------
 
 def estimate_total_seconds(state: dict[str, Any], steps: list[Step]) -> float:
@@ -332,12 +350,16 @@ class ProgressEvent:
 class Runner:
     """Runs the step list sequentially. Use `events()` to iterate progress events."""
 
-    def __init__(self, state: dict[str, Any], steps: list[Step], auto_process_data: bool = False):
+    def __init__(self, state: dict[str, Any], steps: list[Step], auto_process_data: bool = False,
+                 force_process_data: bool = False):
         self.state = state
         self.steps = steps
         # P4: when True, after a clean sync that changed rows, auto-append + run a process_data
         # hub step so the live dashboard reflects the new sheet data in one click.
         self.auto_process_data = auto_process_data
+        # Push-only: run process_data even when no fetch step changed rows (e.g. the user ran
+        # Sync with no masters selected purely to refresh the live dashboard).
+        self.force_process_data = force_process_data
         self._events: deque[ProgressEvent] = deque()
         self._lock = threading.Lock()
         self._current_proc: subprocess.Popen | None = None
@@ -439,11 +461,17 @@ class Runner:
 
         There is no "updated" counter — an edit shows as delete+insert (P4 / audit #9). Checks
         both the top-level counts and the sales `details` (Register) sub-summary.
+
+        Snapshot-replace masters (bill-wise) don't emit appended/deleted — they rewrite the whole
+        snapshot each run and report written_rows. Treat any write as a change so a bill-wise-only
+        refresh still triggers process_data (the snapshot is rebuilt daily; re-running is idempotent).
         """
         for s in self.steps:
             if s.step_type != "tally" or s.phase != "push" or not s.summary:
                 continue
             if (s.summary.get("appended") or 0) > 0 or (s.summary.get("deleted") or 0) > 0:
+                return True
+            if (s.summary.get("written_rows") or 0) > 0:
                 return True
             d = s.summary.get("details") or {}
             if (d.get("appended") or 0) > 0 or (d.get("deleted") or 0) > 0:
@@ -476,7 +504,7 @@ class Runner:
             self._emit(ProgressEvent(kind="log",
                        line="↻ Auto-push skipped: a fetch/push step errored — run process_data manually after review."))
             return
-        if not self._sync_changed_rows():
+        if not self.force_process_data and not self._sync_changed_rows():
             self._emit(ProgressEvent(kind="log",
                        line="↻ Auto-push skipped: nothing changed (0 appended, 0 deleted)."))
             return

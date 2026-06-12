@@ -37,9 +37,13 @@ from orchestrator import (  # noqa: E402
     fy_start_for,
     heal_step,
     reconcile_step,
+    risk_register_export_step,
     step_label,
 )
 from tally_companies import get_tally_host, list_loaded_companies  # noqa: E402
+
+# Masters parked under "Other / Misc" — rendered last and unchecked by default.
+MISC_MASTERS = ("ledger_master", "stock_item_master")
 
 st.set_page_config(
     page_title="Tally Sync Dashboard",
@@ -253,7 +257,7 @@ def init_session() -> None:
     ss.setdefault("steps", None)
     ss.setdefault("run_total_estimate", 0.0)
     ss.setdefault("run_started_at", None)
-    ss.setdefault("master_selected", {m: True for m in UI_ORDER})
+    ss.setdefault("master_selected", {m: (m not in MISC_MASTERS) for m in UI_ORDER})
     ss.setdefault("audit_runner", None)
     ss.setdefault("audit_results", None)
     ss.setdefault("audit_log", [])   # list of human-readable progress strings
@@ -392,8 +396,35 @@ def render_setup_view(state: dict, selected_companies: list[str]) -> None:
 
     st.markdown("&nbsp;", unsafe_allow_html=True)
 
-    plans: list[MasterPlan] = []
+    # Seed each master checkbox's widget state once (default mirrors master_selected; misc → unchecked).
     for mkey in UI_ORDER:
+        st.session_state.setdefault(f"sel_{mkey}", st.session_state.master_selected.get(mkey, True))
+
+    sel_cols = st.columns([0.18, 0.18, 0.64])
+    with sel_cols[0]:
+        if st.button("Select all", use_container_width=True, key="masters_all_btn"):
+            for mkey in UI_ORDER:
+                st.session_state[f"sel_{mkey}"] = True
+                st.session_state.master_selected[mkey] = True
+            st.rerun()
+    with sel_cols[1]:
+        if st.button("Clear all", use_container_width=True, key="masters_clear_btn"):
+            for mkey in UI_ORDER:
+                st.session_state[f"sel_{mkey}"] = False
+                st.session_state.master_selected[mkey] = False
+            st.rerun()
+
+    # Main masters first, the "Other / Misc" snapshot masters parked at the very end.
+    main_keys = [k for k in UI_ORDER if k not in MISC_MASTERS]
+    misc_keys = [k for k in UI_ORDER if k in MISC_MASTERS]
+    ordered_keys = main_keys + misc_keys
+
+    plans: list[MasterPlan] = []
+    for mkey in ordered_keys:
+        if misc_keys and mkey == misc_keys[0]:
+            st.markdown("&nbsp;", unsafe_allow_html=True)
+            st.markdown('<div class="section-eyebrow">Other / Misc masters</div>', unsafe_allow_html=True)
+            st.caption("Snapshot exports not part of the daily outstanding sync — off by default.")
         m = MASTERS[mkey]
         with st.container(border=True):
             top = st.columns([0.45, 0.30, 0.25])
@@ -401,7 +432,6 @@ def render_setup_view(state: dict, selected_companies: list[str]) -> None:
                 checked = st.checkbox(
                     " ",
                     key=f"sel_{mkey}",
-                    value=st.session_state.master_selected.get(mkey, False),
                     label_visibility="collapsed",
                 )
                 st.session_state.master_selected[mkey] = checked
@@ -474,11 +504,15 @@ def render_setup_view(state: dict, selected_companies: list[str]) -> None:
     st.markdown("&nbsp;", unsafe_allow_html=True)
     st.divider()
 
-    can_sync = bool(plans) and bool(selected_companies)
-    preview = build_steps(state, plans, selected_companies, today=today) if can_sync else []
-    if can_sync and not preview:
+    have_fetch = bool(plans) and bool(selected_companies)
+    preview = build_steps(state, plans, selected_companies, today=today) if have_fetch else []
+    # "Push to dashboard only": nothing queued to fetch (no masters, or all up to date), but the
+    # user still wants the live dashboard refreshed — let Sync Data run process_data → Supabase
+    # on its own. Idempotent: re-running process_data just rebuilds the daily snapshot.
+    push_only = bool(auto_push) and not preview
+    can_sync = bool(preview) or push_only
+    if have_fetch and not preview and not auto_push:
         st.info("Everything selected is already up to date — nothing to sync.")
-        can_sync = False
 
     cols = st.columns([3, 2])
     with cols[0]:
@@ -488,19 +522,48 @@ def render_setup_view(state: dict, selected_companies: list[str]) -> None:
                 f"**{len(preview)} steps** · {len(plans)} master(s) × {len(selected_companies)} company(ies) "
                 f"· est. **{fmt_seconds(est)}**"
             )
+        elif push_only:
+            st.markdown(
+                "Nothing to fetch — **Sync Data** will just refresh the live dashboard "
+                "(`process_data.py` → Supabase)."
+            )
         else:
-            st.markdown(":grey[Select at least one master to enable sync.]")
+            st.markdown(":grey[Select at least one master, or enable “Push to dashboard”, to enable sync.]")
     with cols[1]:
         if st.button("▶ Sync Data", type="primary", disabled=not can_sync, use_container_width=True):
             steps = build_steps(state, plans, selected_companies, today=today)
-            if steps:
-                runner = Runner(state, steps, auto_process_data=st.session_state.get("auto_push_dashboard", True))
-                st.session_state.steps = steps
-                st.session_state.runner = runner
-                st.session_state.run_total_estimate = estimate_total_seconds(state, steps)
-                st.session_state.run_started_at = time.time()
-                runner.start()
-                st.rerun()
+            runner = Runner(
+                state, steps,
+                auto_process_data=st.session_state.get("auto_push_dashboard", True),
+                force_process_data=not steps,
+            )
+            st.session_state.steps = steps
+            st.session_state.runner = runner
+            st.session_state.run_total_estimate = estimate_total_seconds(state, steps)
+            st.session_state.run_started_at = time.time()
+            runner.start()
+            st.rerun()
+
+    # Reports — standalone, read-only export of the live dashboard data (no Tally needed).
+    st.markdown("&nbsp;", unsafe_allow_html=True)
+    with st.container(border=True):
+        st.markdown('<div class="section-eyebrow">Reports</div>', unsafe_allow_html=True)
+        st.caption(
+            "Export the Customer Risk Register — one row per customer/company/location with "
+            "the full aging breakdown (0-30 … 180+) — to MISC/risk-register-<date>.xlsx. "
+            "Reads the live dashboard data; does not need Tally."
+        )
+        if st.button("📊 Export Risk Register (Excel)", use_container_width=True,
+                     disabled=st.session_state.get("runner") is not None
+                              and st.session_state.runner.is_running()):
+            steps = [risk_register_export_step()]
+            runner = Runner(state, steps, auto_process_data=False)
+            st.session_state.steps = steps
+            st.session_state.runner = runner
+            st.session_state.run_total_estimate = 0.0
+            st.session_state.run_started_at = time.time()
+            runner.start()
+            st.rerun()
 
 
 def _master_blurb(mkey: str) -> str:
@@ -653,10 +716,24 @@ def _render_summary(steps) -> None:
     by_master: dict[str, dict[str, Any]] = {}
     errors: list[str] = []
     hub_steps = [s for s in steps if s.step_type != "tally"]
+
+    # Local report steps (Risk Register export) report independently of the tally master
+    # summary — an export-only run has no by_master entries, so render before the early return.
+    for h in hub_steps:
+        if h.step_type == "export_risk_register":
+            if h.status == "done" and h.summary:
+                st.success(
+                    f"📊 Risk Register exported — {h.summary.get('rows', '?')} rows → "
+                    f"{h.summary.get('file', '')}",
+                    icon="✅",
+                )
+            elif h.status == "error":
+                st.error(f"📊 Risk Register export failed: {h.error}", icon="⚠️")
+
     for s in steps:
         if s.step_type != "tally":
             continue  # hub steps (auto process_data) shown separately below
-        agg = by_master.setdefault(s.master, {"fetched": 0, "appended": 0, "skipped": 0, "deleted": 0, "errors": 0, "details": None})
+        agg = by_master.setdefault(s.master, {"fetched": 0, "appended": 0, "skipped": 0, "deleted": 0, "errors": 0, "details": None, "snapshot": False, "written": 0})
         if s.status == "error":
             agg["errors"] += 1
             errors.append(f"{MASTERS[s.master].label} → {s.company} ({s.phase}): {s.error}")
@@ -665,6 +742,10 @@ def _render_summary(steps) -> None:
             agg["appended"] += int(s.summary.get("appended", 0) or 0)
             agg["skipped"] += int(s.summary.get("skipped", 0) or 0)
             agg["deleted"] += int(s.summary.get("deleted", 0) or 0)
+            # Snapshot-replace masters (bill-wise) report written_rows instead of appended/skipped.
+            if "written_rows" in s.summary:
+                agg["snapshot"] = True
+                agg["written"] += int(s.summary.get("written_rows", 0) or 0)
             # Accumulate nested details (Sales Outstanding Register)
             d = s.summary.get("details")
             if isinstance(d, dict) and not d.get("skipped_legacy") and not d.get("skipped_no_env"):
@@ -691,12 +772,24 @@ def _render_summary(steps) -> None:
                     unsafe_allow_html=True,
                 )
                 deleted_part = f" · Deleted <b style='color:#DC2626'>{agg['deleted']}</b>" if agg["deleted"] else ""
+                if agg.get("snapshot"):
+                    # Snapshot-replace master: every fetched bill is rewritten each run, so
+                    # Appended/Skipped don't apply — show what was actually written.
+                    counts_html = (
+                        f"Fetched <b style='color:#1C1917'>{agg['fetched']}</b> · "
+                        f"Written <b style='color:#1C1917'>{agg['written']}</b> "
+                        f"<span style='color:{MUTED};'>(snapshot replace)</span>"
+                    )
+                else:
+                    counts_html = (
+                        f"Fetched <b style='color:#1C1917'>{agg['fetched']}</b> · "
+                        f"Appended <b style='color:#1C1917'>{agg['appended']}</b> · "
+                        f"Skipped <b style='color:#1C1917'>{agg['skipped']}</b>"
+                        f"{deleted_part}"
+                    )
                 st.markdown(
                     f'<div style="margin-top:0.5rem;font-size:0.85rem;color:{MUTED};">'
-                    f"Fetched <b style='color:#1C1917'>{agg['fetched']}</b> · "
-                    f"Appended <b style='color:#1C1917'>{agg['appended']}</b> · "
-                    f"Skipped <b style='color:#1C1917'>{agg['skipped']}</b>"
-                    f"{deleted_part}"
+                    f"{counts_html}"
                     f"</div>",
                     unsafe_allow_html=True,
                 )
