@@ -58,7 +58,7 @@ SRC_TAB = "OTHER PAYMENTS"
 
 HEADER = [
     "Company", "Location", "Customer Name", "Ref Invoice No", "Payment Amount",
-    "Payment Date", "Payment Ref", "Allocation Type", "Salesperson",
+    "Payment Date", "Payment Ref", "Allocation Type", "Salesperson", "Remarks",
 ]
 
 # Header-cell notes that are NOT a salesperson (col I sometimes carries a remark).
@@ -171,17 +171,16 @@ def parse_other_payments(xlsx_path: Path) -> list[dict[str, str]]:
         if a_str:
             amt = f if not amt_f_blank else d
             if not _is_blank_amt(amt):
-                cust = _canon_customer(a_str)
-                co, loc = CUSTOMER_LEDGER.get(cust.upper(), ("", ""))
                 rows.append({
-                    "Company": co, "Location": loc,
-                    "Customer Name": cust,
+                    "Company": "", "Location": "",
+                    "Customer Name": _canon_customer(a_str),
                     "Ref Invoice No": "",
                     "Payment Amount": _fmt_amount(amt),
                     "Payment Date": _fmt_date(g),
                     "Payment Ref": _norm(h),
                     "Allocation Type": "ON_ACCOUNT",
                     "Salesperson": _norm(i),
+                    "Remarks": "",
                 })
             continue
 
@@ -205,17 +204,16 @@ def parse_other_payments(xlsx_path: Path) -> list[dict[str, str]]:
             continue  # safety: no customer context
 
         salesperson = _norm(i) or current_salesperson
-        cust = _canon_customer(current_customer)
-        co, loc = CUSTOMER_LEDGER.get(cust.upper(), ("", ""))
         rows.append({
-            "Company": co, "Location": loc,
-            "Customer Name": cust,
+            "Company": "", "Location": "",
+            "Customer Name": _canon_customer(current_customer),
             "Ref Invoice No": ref,
             "Payment Amount": _fmt_amount(f),
             "Payment Date": _fmt_date(g),
             "Payment Ref": _norm(h),
             "Allocation Type": _alloc_for(ref),
             "Salesperson": salesperson,
+            "Remarks": "",
         })
 
     # On-account refs are placeholders (e.g. TWINE "1") — blank them out.
@@ -223,6 +221,135 @@ def parse_other_payments(xlsx_path: Path) -> list[dict[str, str]]:
         if row["Allocation Type"] == "ON_ACCOUNT":
             row["Ref Invoice No"] = ""
     return rows
+
+
+# ── Ledger resolution: fill Company/Location, mark old invoices on-account ──────
+
+def _load_values(svc: Any, url_env: str, tab_env: str) -> tuple[list[str], list[list[str]]]:
+    url = os.environ.get(url_env, "").strip()
+    if not url:
+        return [], []
+    tab = os.environ.get(tab_env, "Sheet1")
+    resp = svc.spreadsheets().values().get(
+        spreadsheetId=extract_sheet_id(url), range=f"'{tab}'", majorDimension="ROWS",
+    ).execute()
+    vals = resp.get("values", [])
+    if not vals:
+        return [], []
+    return [h.strip() for h in vals[0]], vals[1:]
+
+
+def build_resolution_maps(svc: Any) -> dict:
+    """voucher/bill-ref -> owning ledgers, and the customer master -> ledgers."""
+    voucher_map: dict[str, set] = {}   # VOUCHER -> {(name_u, company, location)}
+    billref_map: dict[str, set] = {}   # BILL REF -> {(name_u, company, location)}
+
+    def _idx(header, *names):
+        low = [h.lower() for h in header]
+        for n in names:
+            if n in low:
+                return low.index(n)
+        return None
+
+    # Sales: Voucher No. -> ledger
+    sh, srows = _load_values(svc, "SALES_SHEET_URL", "SALES_SHEET_TAB")
+    if sh:
+        vi, ni, ci, li = (_idx(sh, "voucher no."), _idx(sh, "particulars"),
+                          _idx(sh, "company"), _idx(sh, "location"))
+        for r in srows:
+            def g(idx): return r[idx].strip() if idx is not None and idx < len(r) else ""
+            v = g(vi).upper()
+            if v:
+                voucher_map.setdefault(v, set()).add((g(ni).upper(), g(ci), g(li)))
+
+    # Sales details (register): Bill Ref Name + Voucher No. -> ledger
+    dh, drows = _load_values(svc, "SALES_DETAILS_SHEET_URL", "SALES_DETAILS_SHEET_TAB")
+    if dh:
+        bi, vi, ni, ci, li = (_idx(dh, "bill ref name"), _idx(dh, "voucher no."),
+                              _idx(dh, "particulars"), _idx(dh, "company"), _idx(dh, "location"))
+        for r in drows:
+            def g(idx): return r[idx].strip() if idx is not None and idx < len(r) else ""
+            led = (g(ni).upper(), g(ci), g(li))
+            if g(bi):
+                billref_map.setdefault(g(bi).upper(), set()).add(led)
+            if g(vi):
+                voucher_map.setdefault(g(vi).upper(), set()).add(led)
+
+    # Customer master: $Name -> {(company, location)}
+    master_map: dict[str, set] = {}
+    mh, mrows = _load_values(svc, "CREDIT_LIMIT_SHEET_URL", "CREDIT_LIMIT_SHEET_TAB")
+    if mh:
+        ni = _idx(mh, "$name") or next((j for j, h in enumerate(mh) if "name" in h.lower()), None)
+        ci, li = _idx(mh, "company"), _idx(mh, "location")
+        for r in mrows:
+            def g(idx): return r[idx].strip() if idx is not None and idx < len(r) else ""
+            if ni is not None and g(ni):
+                master_map.setdefault(g(ni).upper(), set()).add((g(ci), g(li)))
+
+    return {"voucher": voucher_map, "billref": billref_map, "master": master_map}
+
+
+def _lookup_invoice(ref: str, name_u: str, voucher_map: dict, billref_map: dict):
+    """The (company, location) that owns this invoice ref FOR THIS CUSTOMER, else None.
+    Requires the invoice's ledger name to match the payment's customer — a voucher number
+    reused by another customer (or a stray ref) is NOT this customer's invoice."""
+    r = ref.strip().upper()
+    for mp in (voucher_map, billref_map):
+        cands = mp.get(r)
+        if not cands:
+            continue
+        named = {(co, lo) for (nm, co, lo) in cands if nm == name_u}
+        if len(named) == 1:
+            return next(iter(named))
+    return None
+
+
+def resolve_ledgers(rows: list[dict[str, str]], maps: dict) -> None:
+    """Fill Company/Location for every row. An invoice that's found stays AGAINST_INVOICE
+    on its owning ledger; a blank-ref or old/not-found invoice becomes ON_ACCOUNT with a
+    remark, pinned to the customer's ledger (explicit override -> the company of the
+    customer's matched invoices -> a unique master ledger)."""
+    from collections import Counter
+    voucher_map, billref_map, master_map = maps["voucher"], maps["billref"], maps["master"]
+
+    # Pass 1: resolve found invoices; learn each customer's "active" company.
+    matched: dict[str, Counter] = {}
+    for row in rows:
+        ref, name_u = row["Ref Invoice No"].strip(), row["Customer Name"].strip().upper()
+        if ref and INVOICE_REF_RE.search(ref):
+            colo = _lookup_invoice(ref, name_u, voucher_map, billref_map)
+            if colo:
+                row["_resolved"] = colo
+                matched.setdefault(name_u, Counter())[colo] += 1
+    primary = {n: c.most_common(1)[0][0] for n, c in matched.items()}
+
+    # Pass 2: finalize.
+    for row in rows:
+        ref, name_u = row["Ref Invoice No"].strip(), row["Customer Name"].strip().upper()
+        if row.pop("_resolved", None):
+            row["Company"], row["Location"] = _lookup_invoice(ref, name_u, voucher_map, billref_map)
+            row["Allocation Type"] = "AGAINST_INVOICE"
+            row["Remarks"] = ""
+            continue
+        had_ref = bool(ref and INVOICE_REF_RE.search(ref))
+        uniq = master_map.get(name_u)
+        co, lo = (CUSTOMER_LEDGER.get(name_u)
+                  or primary.get(name_u)
+                  or (next(iter(uniq)) if uniq and len(uniq) == 1 else None)
+                  or ("", ""))
+        row["Company"], row["Location"] = co, lo
+        row["Allocation Type"] = "ON_ACCOUNT"
+        if had_ref:
+            r_u = ref.strip().upper()
+            ref_exists = (r_u in voucher_map) or (r_u in billref_map)
+            if ref_exists:
+                row["Remarks"] = f"Invoice {ref} belongs to another ledger - booked On Account"
+            else:
+                row["Remarks"] = f"Invoice {ref} not in current data (old) - booked On Account"
+        else:
+            row["Remarks"] = "On Account (no invoice)"
+        if not co:
+            row["Remarks"] += " - SET COMPANY/LOCATION"
 
 
 # ── Google Sheets ──────────────────────────────────────────────────────────────
@@ -309,36 +436,37 @@ def main() -> int:
     load_dotenv()
     rows = parse_other_payments(Path(args.input))
 
+    svc = authorize()
+    maps = build_resolution_maps(svc)
+    resolve_ledgers(rows, maps)
+
     n_against = sum(1 for r in rows if r["Allocation Type"] == "AGAINST_INVOICE")
     n_onacct = sum(1 for r in rows if r["Allocation Type"] == "ON_ACCOUNT")
+    n_old = sum(1 for r in rows if "old" in r["Remarks"].lower())
+    n_blankco = sum(1 for r in rows if not r["Company"])
     total = sum(float(r["Payment Amount"]) for r in rows if r["Payment Amount"])
     customers = sorted({r["Customer Name"] for r in rows})
 
     print(f"Parsed {len(rows)} other-payment rows "
-          f"({n_against} against-invoice, {n_onacct} on-account) "
+          f"({n_against} against-invoice, {n_onacct} on-account; {n_old} old-invoice->on-account) "
           f"across {len(customers)} customers; total Rs {total:,.0f}")
+
+    # Unmatched-name check against the customer master.
+    master_names = set(maps["master"].keys())
+    if master_names:
+        unmatched = sorted(n for n in customers if n.upper() not in master_names)
+        if unmatched:
+            print(f"  WARNING: {len(unmatched)} customer name(s) not found in master: {unmatched}")
+        else:
+            print("  All customer names matched the credit-limit master.")
+    if n_blankco:
+        print(f"  WARNING: {n_blankco} row(s) have no Company resolved (see 'SET COMPANY' remarks).")
 
     if args.dry_run:
         for r in rows:
-            print(f"  {r['Customer Name'][:38]:38} | {r['Allocation Type']:15} | "
-                  f"{r['Ref Invoice No'][:22]:22} | {r['Payment Amount']:>14} | "
-                  f"{r['Payment Date']:10} | {r['Payment Ref']}")
-
-    svc = authorize()
-
-    # Unmatched-name check against the customer master.
-    master = fetch_master_names(svc)
-    if master:
-        unmatched = sorted(n for n in customers if n.upper() not in master)
-        if unmatched:
-            print(f"\n  WARNING: {len(unmatched)} customer name(s) not found in credit-limit master "
-                  f"(verify spelling before pipeline ingest):")
-            for n in unmatched:
-                print(f"    - {n}")
-        else:
-            print("  All customer names matched the credit-limit master.")
-
-    if args.dry_run:
+            print(f"  {r['Customer Name'][:30]:30} | {r['Company']:10} {r['Location']:7}| "
+                  f"{r['Allocation Type']:15} | {r['Ref Invoice No'][:20]:20} | "
+                  f"{r['Payment Amount']:>13} | {r['Remarks']}")
         print("\n(dry-run: nothing written)")
         return 0
 
