@@ -99,6 +99,10 @@ CUSTOMER_LEDGER = {
 # A ref that looks like a real Tally invoice: has a slash or a letter.
 INVOICE_REF_RE = re.compile(r"[A-Za-z/]")
 
+# FY 25-26 start: invoices dated before this are prior-year (rolled into the opening
+# balance), so a payment against them can't target a current bill -> booked On Account.
+FY2526_CUTOFF = date(2025, 4, 1)
+
 
 def _norm(val: Any) -> str:
     if val is None:
@@ -181,6 +185,7 @@ def parse_other_payments(xlsx_path: Path) -> list[dict[str, str]]:
                     "Allocation Type": "ON_ACCOUNT",
                     "Salesperson": _norm(i),
                     "Remarks": "",
+                    "_invoice_date": None,
                 })
             continue
 
@@ -214,6 +219,7 @@ def parse_other_payments(xlsx_path: Path) -> list[dict[str, str]]:
             "Allocation Type": _alloc_for(ref),
             "Salesperson": salesperson,
             "Remarks": "",
+            "_invoice_date": a if isinstance(a, (datetime, date)) else None,
         })
 
     # On-account refs are placeholders (e.g. TWINE "1") — blank them out.
@@ -339,13 +345,18 @@ def resolve_ledgers(rows: list[dict[str, str]], maps: dict) -> None:
                   or ("", ""))
         row["Company"], row["Location"] = co, lo
         row["Allocation Type"] = "ON_ACCOUNT"
+        inv_date = row.get("_invoice_date")
+        inv_d = inv_date.date() if isinstance(inv_date, datetime) else inv_date  # date | None
         if had_ref:
             r_u = ref.strip().upper()
             ref_exists = (r_u in voucher_map) or (r_u in billref_map)
-            if ref_exists:
-                row["Remarks"] = f"Invoice {ref} belongs to another ledger - booked On Account"
+            if inv_d is not None and inv_d < FY2526_CUTOFF:
+                row["Remarks"] = (f"On Account - invoice {ref} dated {inv_d.strftime('%d-%m-%Y')} "
+                                  f"is before 01-04-2025 (prior year / opening balance)")
+            elif ref_exists:
+                row["Remarks"] = f"On Account - invoice {ref} belongs to another ledger"
             else:
-                row["Remarks"] = f"Invoice {ref} not in current data (old) - booked On Account"
+                row["Remarks"] = f"On Account - invoice {ref} not in current data (old)"
         else:
             row["Remarks"] = "On Account (no invoice)"
         if not co:
@@ -442,7 +453,7 @@ def main() -> int:
 
     n_against = sum(1 for r in rows if r["Allocation Type"] == "AGAINST_INVOICE")
     n_onacct = sum(1 for r in rows if r["Allocation Type"] == "ON_ACCOUNT")
-    n_old = sum(1 for r in rows if "old" in r["Remarks"].lower())
+    n_old = sum(1 for r in rows if r["Allocation Type"] == "ON_ACCOUNT" and r["Ref Invoice No"])
     n_blankco = sum(1 for r in rows if not r["Company"])
     total = sum(float(r["Payment Amount"]) for r in rows if r["Payment Amount"])
     customers = sorted({r["Customer Name"] for r in rows})
