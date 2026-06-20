@@ -89,7 +89,7 @@ def _canon_customer(name: str) -> str:
 CUSTOMER_LEDGER = {
     # on-account (no invoice ref)
     "ETHOS":                  ("O-tec", "Surat"),
-    "SINO STAR ENTERPRISE":   ("O-tec", "Surat"),
+    "SINO STAR ENTERPRISE":   ("Enterprise", "Surat"),  # settle the 25L against the Enterprise outstanding
     "VERONICA DIGITAL":       ("O-tec", "Surat"),
     # against-invoice but ref not resolvable (old/opening invoice or reused voucher #)
     "ADIYA DESIGNER":         ("O-tec", "Surat"),
