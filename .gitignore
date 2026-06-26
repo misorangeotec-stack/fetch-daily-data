@@ -1,0 +1,30 @@
+# Secrets — never commit
+.env
+credentials.json
+token.json
+*.pem
+*.key
+
+# Temporary processing files
+.tmp/
+
+# Auto-generated data backups (not code)
+backups/
+
+# Runtime state (machine-specific sync watermarks)
+tools/sync_dashboard/sync_state.json
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.venv/
+venv/
+env/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+.DS_Store
