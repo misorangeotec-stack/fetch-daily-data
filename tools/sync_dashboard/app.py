@@ -8,9 +8,13 @@ from __future__ import annotations
 
 import json
 import os
+import queue
+import re
 import subprocess
 import sys
+import threading
 import time
+from collections import deque
 from datetime import date, datetime, timedelta
 from pathlib import Path
 from typing import Any
@@ -40,7 +44,12 @@ from orchestrator import (  # noqa: E402
     risk_register_export_step,
     step_label,
 )
-from tally_companies import get_tally_host, list_loaded_companies  # noqa: E402
+from tally_companies import (  # noqa: E402
+    company_number_map,
+    get_tally_host,
+    inactive_company_numbers,
+    list_loaded_companies,
+)
 
 # Masters parked under "Other / Misc" — rendered last and unchecked by default.
 MISC_MASTERS = ("ledger_master", "stock_item_master")
@@ -316,18 +325,30 @@ def render_sidebar() -> list[str]:
         st.markdown('<div class="section-eyebrow">Companies to sync</div>', unsafe_allow_html=True)
         loaded = st.session_state.companies_loaded or []
 
-        # Initialize each checkbox to True on first sight (default = all selected).
-        for c in loaded:
-            key = f"co::{c}"
-            if key not in st.session_state:
-                st.session_state[key] = True
+        # Bifurcate active vs old/closed companies (old ones are flagged by number
+        # in .env → TALLY_INACTIVE_COMPANIES). A loaded company is "old" only if its
+        # number resolves and is in that set; everything else defaults to active.
+        num_map = company_number_map()
+        inactive_nums = inactive_company_numbers()
+        active = [c for c in loaded if num_map.get(c) not in inactive_nums]
+        old = [c for c in loaded if num_map.get(c) in inactive_nums]
+
+        # Initialize each checkbox on first sight: active → True, old → False.
+        for c in active:
+            st.session_state.setdefault(f"co::{c}", True)
+        for c in old:
+            st.session_state.setdefault(f"co::{c}", False)
 
         if loaded:
             btn_cols = st.columns(2)
             with btn_cols[0]:
-                if st.button("Select all", use_container_width=True, key="co_all_btn"):
-                    for c in loaded:
+                # "Select all" stays scoped to the ACTIVE companies, so a casual
+                # click never re-enables the locked/closed books.
+                if st.button("Select active", use_container_width=True, key="co_all_btn"):
+                    for c in active:
                         st.session_state[f"co::{c}"] = True
+                    for c in old:
+                        st.session_state[f"co::{c}"] = False
                     st.rerun()
             with btn_cols[1]:
                 if st.button("Clear", use_container_width=True, key="co_clear_btn"):
@@ -335,8 +356,24 @@ def render_sidebar() -> list[str]:
                         st.session_state[f"co::{c}"] = False
                     st.rerun()
 
-        for c in loaded:
-            st.checkbox(c, key=f"co::{c}")
+        def _co_checkbox(c: str) -> None:
+            num = num_map.get(c)
+            # Key stays the raw Tally name (selection + sync state depend on it);
+            # only the visible label carries the company number.
+            label = f"#{num} · {c}" if num else c
+            st.checkbox(label, key=f"co::{c}")
+
+        for c in active:
+            _co_checkbox(c)
+
+        if old:
+            st.markdown(
+                '<div class="section-eyebrow" style="margin-top:0.5rem;">Old / closed companies</div>',
+                unsafe_allow_html=True,
+            )
+            st.caption("Locked or superseded — off by default. Tick only for a one-off final fetch.")
+            for c in old:
+                _co_checkbox(c)
 
         selected = [c for c in loaded if st.session_state.get(f"co::{c}", False)]
         st.caption(f"{len(selected)} of {len(loaded)} selected")
@@ -549,8 +586,9 @@ def render_setup_view(state: dict, selected_companies: list[str]) -> None:
     with st.container(border=True):
         st.markdown('<div class="section-eyebrow">Reports</div>', unsafe_allow_html=True)
         st.caption(
-            "Export the Customer Risk Register — one row per customer/company/location with "
-            "the full aging breakdown (0-30 … 180+) — to MISC/risk-register-<date>.xlsx. "
+            "Export the Customer Risk Register to MISC/risk-register-<date>.xlsx — a "
+            "'Risk Register' sheet (one row per customer/company/location, full aging 0-30 … "
+            "180+, plus a Blocked flag) and a 'By Sale Type' sheet (one row per sale type). "
             "Reads the live dashboard data; does not need Tally."
         )
         if st.button("📊 Export Risk Register (Excel)", use_container_width=True,
@@ -1034,22 +1072,158 @@ def _latest_report() -> Path | None:
     return reports[0] if reports else None
 
 
-def _run_blocking(argv: list[str], cwd: Path, label: str, timeout: int = 1800) -> tuple[int, str, str]:
-    """Run a Hub/FETCH subprocess to completion under a spinner; tee tail into recon_log."""
-    env = {**os.environ, "PYTHONUTF8": "1"}
+# ── live-progress parsers: map a child stdout line → (fraction|None, sublabel|None) ──────────
+# Each runs within ONE _run_blocking call, so fractions are local to that step's 0..1 bar.
+
+_RX_LEDGER = re.compile(r"\[ledger-master\]\s+(\d+)\s*/\s*(\d+)")
+_RX_STEP = re.compile(r"Step\s+(\d)\s*/\s*3")
+
+
+def _prog_fetch(line: str) -> tuple[float | None, str | None]:
+    """Tally ledger-master fetch — driven by the per-company '[ledger-master] i/n …' lines."""
+    m = _RX_LEDGER.search(line)
+    if m:
+        i, n = int(m.group(1)), int(m.group(2))
+        frac = 0.04 + 0.92 * (i / n) if n else 0.5
+        # Show "i/n — Company / Location" (strip the marker prefix for a cleaner label).
+        return frac, f"Fetching company {line.split(']', 1)[-1].strip()}"
+    return None, None
+
+
+def _prog_reconcile(line: str) -> tuple[float | None, str | None]:
+    """reconcile.py — three explicit phases plus a few sub-markers."""
+    m = _RX_STEP.search(line)
+    if m:
+        return {1: 0.15, 2: 0.45, 3: 0.72}.get(int(m.group(1))), line.strip()
+    if "[Tally] Done" in line:        return 0.40, "Tally fetched"
+    if "[GSheets] Done" in line:      return 0.68, "Sheets recomputed"
+    if "[Supabase] Done" in line:     return 0.82, "Supabase fetched"
+    if "Building comparison" in line: return 0.88, "Comparing…"
+    if "RESULTS" in line:             return 0.94, "Reconcile done — building report"
+    if "Report saved" in line:        return 0.99, "Report saved"
+    return None, None
+
+
+def _prog_cache(line: str) -> tuple[float | None, str | None]:
+    """stage0 cache builder — short; just two coarse beats."""
+    if "customers:" in line: return 0.6, "Computing balances…"
+    if "Wrote" in line:      return 0.95, "Cache written"
+    return None, None
+
+
+def _prog_heal(line: str) -> tuple[float | None, str | None]:
+    """self_heal --execute — per-party heals, then the process_data re-push."""
+    if "── Healing" in line:            return None, line.strip()[:64]
+    if "Running process_data" in line:  return 0.55, "process_data → Supabase…"
+    if "Building snapshot" in line:     return 0.75, "Building snapshots…"
+    if "process_data.py done" in line:  return 0.95, "Pushed to dashboard"
+    if "HEAL SESSION DONE" in line:     return 0.98, "Heal done"
+    return None, None
+
+
+def _prog_pd(line: str) -> tuple[float | None, str | None]:
+    """process_data.py — Sheets → 3 snapshots → Supabase (~60-120s)."""
+    if "Loading Google Sheets" in line:   return 0.05, "Loading Google Sheets…"
+    if "[sheets] fetched" in line:        return 0.25, "Sheets loaded"
+    if "Building customer list" in line:  return 0.35, "Building customer list…"
+    if "=== Building snapshot" in line:   return 0.55, "Building snapshots…"
+    if "Writing" in line and "snapshot" in line: return 0.85, "Writing snapshots…"
+    if "Wrote snapshot" in line or "Wrote customers" in line: return 0.92, "Pushing to Supabase…"
+    if line.startswith("Done!"):          return 0.99, "Complete"
+    return None, None
+
+
+def _run_blocking(argv: list[str], cwd: Path, label: str, timeout: int = 1800,
+                  progress_fn=None) -> tuple[int, str, str]:
+    """Run a Hub/FETCH subprocess, streaming live progress (bar + elapsed + ETA + log tail).
+
+    A helper thread reads child stdout into a queue; the Streamlit script thread polls it so the
+    elapsed clock keeps ticking even when the child is briefly silent. progress_fn(line) ->
+    (frac|None, sublabel|None) drives the bar; ETA is derived generically from frac + elapsed.
+    Tees the output tail into recon_log (for the persistent Log expander) and returns
+    (returncode, full_stdout, stderr) — stderr is folded into stdout so it's "".
+    """
+    env = {**os.environ, "PYTHONUTF8": "1", "PYTHONIOENCODING": "utf-8"}
     st.session_state.recon_log.append(f"$ {label}")
-    with st.spinner(label):
+
+    status = st.status(label, expanded=True)
+    bar = status.progress(0.0, text="Starting…")
+    log_ph = status.empty()
+
+    started = time.time()
+    tail: deque = deque(maxlen=14)
+    out_lines: list[str] = []
+    frac = 0.02
+    sublabel = "Starting…"
+
+    try:
+        proc = subprocess.Popen(
+            argv, cwd=str(cwd), stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+            text=True, encoding="utf-8", errors="replace", bufsize=1, env=env,
+        )
+    except Exception as exc:
+        status.update(label=f"{label} — failed to start", state="error")
+        st.session_state.recon_log.append(f"  ✗ could not start: {exc!r}")
+        return 1, "", repr(exc)
+
+    q: queue.Queue = queue.Queue()
+
+    def _reader() -> None:
+        assert proc.stdout is not None
+        for raw in proc.stdout:
+            q.put(raw.rstrip("\n"))
+        q.put(None)  # sentinel: stdout closed
+
+    threading.Thread(target=_reader, daemon=True).start()
+
+    def _render(done: bool = False) -> None:
+        elapsed = time.time() - started
+        eta_txt = ""
+        if not done and 0.02 < frac < 0.99:
+            eta = elapsed * (1 - frac) / frac
+            eta_txt = f"  ·  ~{fmt_seconds(eta)} left"
+        bar.progress(1.0 if done else min(frac, 0.99),
+                     text=f"{sublabel}  ·  {fmt_seconds(elapsed)} elapsed{eta_txt}")
+        log_ph.code("\n".join(tail) or "…", language="text")
+
+    while True:
         try:
-            proc = subprocess.run(argv, cwd=str(cwd), capture_output=True, text=True, env=env, timeout=timeout)
-        except subprocess.TimeoutExpired:
-            st.session_state.recon_log.append(f"  ✗ timed out after {timeout}s")
-            return 1, "", "timeout"
-    out = (proc.stdout or "")
-    for ln in out.splitlines()[-12:]:
+            line = q.get(timeout=0.4)
+        except queue.Empty:
+            if time.time() - started > timeout:
+                try:
+                    proc.terminate()
+                except Exception:
+                    pass
+                status.update(label=f"{label} — timed out after {timeout}s", state="error")
+                st.session_state.recon_log.append(f"  ✗ timed out after {timeout}s")
+                return 1, "\n".join(out_lines), "timeout"
+            _render()  # tick the clock while the child is silent
+            continue
+        if line is None:
+            break
+        out_lines.append(line)
+        tail.append(line)
+        if progress_fn is not None:
+            f, lbl = progress_fn(line)
+            if f is not None:
+                frac = max(frac, f)
+            if lbl:
+                sublabel = lbl
+        _render()
+
+    rc = proc.wait()
+    _render(done=True)
+
+    for ln in out_lines[-12:]:
         st.session_state.recon_log.append("  " + ln)
-    if proc.returncode != 0:
-        st.session_state.recon_log.append(f"  ✗ exit {proc.returncode}: {(proc.stderr or '')[-300:]}")
-    return proc.returncode, out, (proc.stderr or "")
+    total = fmt_seconds(time.time() - started)
+    if rc != 0:
+        status.update(label=f"{label} — exit {rc} (after {total})", state="error")
+        st.session_state.recon_log.append(f"  ✗ exit {rc}")
+    else:
+        status.update(label=f"{label} — done in {total}", state="complete", expanded=False)
+    return rc, "\n".join(out_lines), ""
 
 
 def _parse_last_json(stdout: str) -> dict | None:
@@ -1072,7 +1246,8 @@ def _reconcile_and_plan(as_of: date) -> bool:
             f"  ✗ no cache/ledger-map for {as_of_s} — rebuild the Tally cache first.")
         return False
     rc, _, _ = _run_blocking(reconcile_step(as_of_s, str(cache), str(ledger_map)).argv,
-                             HUB_ROOT, f"Reconciling as-of {as_of_s} (read-only, reusing cache)…")
+                             HUB_ROOT, f"Reconciling as-of {as_of_s} (read-only, reusing cache)…",
+                             progress_fn=_prog_reconcile)
     if rc != 0:
         return False
     report = _latest_report()
@@ -1104,13 +1279,14 @@ def _rebuild_cache_then_reconcile(as_of: date, companies: list[str]) -> bool:
     fetch_tool = SKILLS_ROOT / "tally-ledger-master-sync" / "tools" / "fetch_tally_ledger_master.py"
     rc, _, _ = _run_blocking(
         [py, str(fetch_tool), "--from", "01-04-2025", "--to", as_of_s, "--output", str(ledger_map)],
-        PROJECT_ROOT, f"Fetching Tally ledger master (all loaded companies) as-of {as_of_s}…", timeout=2400)
+        PROJECT_ROOT, f"Fetching Tally ledger master (all loaded companies) as-of {as_of_s}…",
+        timeout=2400, progress_fn=_prog_fetch)
     if rc != 0 or not ledger_map.exists():
         st.session_state.recon_log.append("  ✗ ledger-master fetch failed — is Tally up? Aborting rebuild.")
         return False
     rc2, _, _ = _run_blocking(
         cache_build_step(as_of_s, str(ledger_map), str(cache), _prior_cache()).argv,
-        HUB_ROOT, f"Building Tally cache for {as_of_s}…")
+        HUB_ROOT, f"Building Tally cache for {as_of_s}…", progress_fn=_prog_cache)
     if rc2 != 0:
         return False
     return _reconcile_and_plan(as_of)
@@ -1127,7 +1303,8 @@ def _heal_selected(as_of: date, selected_ids: list[str]) -> bool:
     argv = heal_step(report, as_of_s, str(cache), _prior_cache() or str(cache),
                      ",".join(selected_ids), execute=True).argv
     rc, out, _ = _run_blocking(argv, HUB_ROOT,
-                               f"Healing {len(selected_ids)} party(ies) + process_data…", timeout=3600)
+                               f"Healing {len(selected_ids)} party(ies) + process_data…",
+                               timeout=3600, progress_fn=_prog_heal)
     res = _parse_last_json(out)
     if rc != 0:
         st.session_state.recon_log.append("  ✗ heal failed — see log; backups are in <FETCH>/backups/heal_*.")
@@ -1169,19 +1346,35 @@ def render_reconcile_tab(state: dict, selected_companies: list[str]) -> None:
                     f"**Tally cache:** `{cache.name}` · built {mt} "
                     f"{'· :green[today]' if fresh else '· :orange[not today — consider rebuild]'}")
             else:
-                st.markdown(":orange[**No Tally cache for this date.**] Rebuild it first (needs Tally up).")
+                st.markdown(":orange[**No Tally cache for this date.**] Run Reconcile will build it "
+                            "from Tally first (needs Tally up + a company selected).")
 
+        have_cache = cache.exists() and ledger_map.exists()
         bcols = st.columns([0.34, 0.34, 0.32])
         with bcols[0]:
-            if st.button("▶ Run Reconcile", type="primary", use_container_width=True,
-                         disabled=not (cache.exists() and ledger_map.exists())):
-                if _reconcile_and_plan(as_of):
+            # "Run Reconcile" works for ANY as-of date. When a cache exists it reconciles read-only
+            # (fast, no Tally). When it doesn't, it first fetches the Tally ledger master + builds the
+            # cache for that date, then reconciles — so the picker is never greyed out just because
+            # no snapshot was pre-built. Building needs Tally up + a company selection.
+            run_label = "▶ Run Reconcile" if have_cache else "▶ Build cache + Run Reconcile"
+            run_disabled = (not have_cache) and (not selected_companies)
+            run_help = None if have_cache else (
+                "No Tally cache for this date — this will fetch the Tally ledger master (all loaded "
+                "companies) and build it first. Needs Tally up; pick at least one company.")
+            if st.button(run_label, type="primary", use_container_width=True,
+                         disabled=run_disabled, help=run_help):
+                ok = (_reconcile_and_plan(as_of) if have_cache
+                      else _rebuild_cache_then_reconcile(as_of, selected_companies))
+                if ok:
                     st.rerun()
         with bcols[1]:
-            rebuild = st.button("🔄 Rebuild Tally cache + reconcile", use_container_width=True,
+            # Force a fresh cache even when one already exists for this date (e.g. it's stale / not
+            # built today and you want to re-pull from Tally before reconciling).
+            rebuild = st.button("🔄 Rebuild cache (force) + reconcile", use_container_width=True,
                                 disabled=not selected_companies,
-                                help="Fetches the Tally ledger master (one call, all loaded companies) "
-                                     "then rebuilds the cache. Needs Tally up; run ONE Tally job at a time.")
+                                help="Re-fetch the Tally ledger master (one call, all loaded companies) "
+                                     "and rebuild the cache even if one already exists for this date. "
+                                     "Needs Tally up; run ONE Tally job at a time.")
             if rebuild:
                 if _rebuild_cache_then_reconcile(as_of, selected_companies):
                     st.rerun()
@@ -1253,7 +1446,8 @@ def render_reconcile_tab(state: dict, selected_companies: list[str]) -> None:
                 # No sheet heal needed — just refresh Supabase from the current sheets.
                 rc, _, _ = _run_blocking(
                     [sys.executable, str(HUB_ROOT / "scripts" / "process_data.py")],
-                    HUB_ROOT, "Running process_data → Supabase…", timeout=1800)
+                    HUB_ROOT, "Running process_data → Supabase…", timeout=1800,
+                    progress_fn=_prog_pd)
                 if rc == 0 and _reconcile_and_plan(as_of):
                     st.rerun()
     else:

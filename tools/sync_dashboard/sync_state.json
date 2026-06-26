@@ -2,205 +2,399 @@
   "last_sync": {
     "sales": {
       "ORANGE O TEC ENTERPRISES PRIVATE LIMITED-NOIDA - (from 1-Apr-25)": {
-        "to_date": "28-05-2026",
-        "completed_at": "2026-05-29T15:24:29+05:30"
+        "to_date": "17-06-2026",
+        "completed_at": "2026-06-17T12:05:53+05:30",
+        "from_date": "14-06-2026"
       },
       "ORANGE O TEC ENTERPRISES PVT LTD - (from 1-Apr-24)": {
-        "to_date": "28-05-2026",
-        "completed_at": "2026-05-29T15:24:29+05:30"
+        "to_date": "17-06-2026",
+        "completed_at": "2026-06-17T12:06:28+05:30",
+        "from_date": "14-06-2026"
       },
       "ORANGE O TEC PRIVATE LIMITED-NOIDA-(from 1-Apr-25)": {
-        "to_date": "28-05-2026",
-        "completed_at": "2026-05-29T15:24:29+05:30"
+        "to_date": "19-06-2026",
+        "completed_at": "2026-06-19T17:41:42+05:30",
+        "from_date": "17-06-2026"
       },
       "ORANGE O TEC PRIVATE LIMITED (01-04-25TO31-03-27)": {
-        "to_date": "28-05-2026",
-        "completed_at": "2026-05-29T15:24:29+05:30"
+        "to_date": "19-06-2026",
+        "completed_at": "2026-06-19T17:41:25+05:30",
+        "from_date": "17-06-2026"
+      },
+      "COLORIX DIGITAL PRINTING SOLUTIONS LLP - (from 1-Apr-20)": {
+        "to_date": "19-06-2026",
+        "completed_at": "2026-06-19T17:40:42+05:30",
+        "from_date": "17-06-2026"
+      },
+      "ORANGE O TEC ENTERPRISES PRIVATE LIMITED-NOIDA - (from 1-Apr-25) - (from 1-Apr-26)": {
+        "to_date": "17-06-2026",
+        "completed_at": "2026-06-17T12:06:05+05:30",
+        "from_date": "14-06-2026"
+      },
+      "ORANGE O TEC ENTERPRISES PRIVATE LIMITED-NOIDA -FY 26-27": {
+        "to_date": "19-06-2026",
+        "completed_at": "2026-06-19T17:40:52+05:30",
+        "from_date": "17-06-2026"
+      },
+      "ORANGE O TEC ENTERPRISES PVT LTD - FY24-26": {
+        "to_date": "19-06-2026",
+        "completed_at": "2026-06-19T17:41:09+05:30",
+        "from_date": "17-06-2026"
       }
     },
     "salescreditnote": {
       "ORANGE O TEC ENTERPRISES PRIVATE LIMITED-NOIDA - (from 1-Apr-25)": {
-        "to_date": "28-05-2026",
-        "completed_at": "2026-05-29T15:24:29+05:30"
+        "to_date": "17-06-2026",
+        "completed_at": "2026-06-17T12:07:13+05:30",
+        "from_date": "14-06-2026"
       },
       "ORANGE O TEC ENTERPRISES PVT LTD - (from 1-Apr-24)": {
-        "to_date": "28-05-2026",
-        "completed_at": "2026-05-29T15:24:29+05:30"
+        "to_date": "17-06-2026",
+        "completed_at": "2026-06-17T12:07:28+05:30",
+        "from_date": "14-06-2026"
       },
       "ORANGE O TEC PRIVATE LIMITED-NOIDA-(from 1-Apr-25)": {
-        "to_date": "28-05-2026",
-        "completed_at": "2026-05-29T15:24:29+05:30"
+        "to_date": "19-06-2026",
+        "completed_at": "2026-06-19T17:42:26+05:30",
+        "from_date": "17-06-2026"
       },
       "ORANGE O TEC PRIVATE LIMITED (01-04-25TO31-03-27)": {
-        "to_date": "28-05-2026",
-        "completed_at": "2026-05-29T15:24:29+05:30"
+        "to_date": "19-06-2026",
+        "completed_at": "2026-06-19T17:42:15+05:30",
+        "from_date": "17-06-2026"
+      },
+      "COLORIX DIGITAL PRINTING SOLUTIONS LLP - (from 1-Apr-20)": {
+        "to_date": "19-06-2026",
+        "completed_at": "2026-06-19T17:41:48+05:30",
+        "from_date": "17-06-2026"
+      },
+      "ORANGE O TEC ENTERPRISES PRIVATE LIMITED-NOIDA - (from 1-Apr-25) - (from 1-Apr-26)": {
+        "to_date": "17-06-2026",
+        "completed_at": "2026-06-17T12:07:20+05:30",
+        "from_date": "14-06-2026"
+      },
+      "ORANGE O TEC ENTERPRISES PRIVATE LIMITED-NOIDA -FY 26-27": {
+        "to_date": "19-06-2026",
+        "completed_at": "2026-06-19T17:41:53+05:30",
+        "from_date": "17-06-2026"
+      },
+      "ORANGE O TEC ENTERPRISES PVT LTD - FY24-26": {
+        "to_date": "19-06-2026",
+        "completed_at": "2026-06-19T17:42:00+05:30",
+        "from_date": "17-06-2026"
       }
     },
     "bankreceipt": {
       "ORANGE O TEC ENTERPRISES PRIVATE LIMITED-NOIDA - (from 1-Apr-25)": {
-        "to_date": "28-05-2026",
-        "completed_at": "2026-05-29T15:24:29+05:30"
+        "to_date": "17-06-2026",
+        "completed_at": "2026-06-17T12:09:19+05:30",
+        "from_date": "14-06-2026"
       },
       "ORANGE O TEC ENTERPRISES PVT LTD - (from 1-Apr-24)": {
-        "to_date": "28-05-2026",
-        "completed_at": "2026-05-29T15:24:29+05:30"
+        "to_date": "17-06-2026",
+        "completed_at": "2026-06-17T12:09:32+05:30",
+        "from_date": "14-06-2026"
       },
       "ORANGE O TEC PRIVATE LIMITED-NOIDA-(from 1-Apr-25)": {
-        "to_date": "28-05-2026",
-        "completed_at": "2026-05-29T15:24:29+05:30"
+        "to_date": "19-06-2026",
+        "completed_at": "2026-06-19T17:44:25+05:30",
+        "from_date": "17-06-2026"
       },
       "ORANGE O TEC PRIVATE LIMITED (01-04-25TO31-03-27)": {
-        "to_date": "28-05-2026",
-        "completed_at": "2026-05-29T15:24:29+05:30"
+        "to_date": "19-06-2026",
+        "completed_at": "2026-06-19T17:44:19+05:30",
+        "from_date": "17-06-2026"
+      },
+      "COLORIX DIGITAL PRINTING SOLUTIONS LLP - (from 1-Apr-20)": {
+        "to_date": "19-06-2026",
+        "completed_at": "2026-06-19T17:43:54+05:30",
+        "from_date": "17-06-2026"
+      },
+      "ORANGE O TEC ENTERPRISES PRIVATE LIMITED-NOIDA - (from 1-Apr-25) - (from 1-Apr-26)": {
+        "to_date": "17-06-2026",
+        "completed_at": "2026-06-17T12:09:24+05:30",
+        "from_date": "14-06-2026"
+      },
+      "ORANGE O TEC ENTERPRISES PRIVATE LIMITED-NOIDA -FY 26-27": {
+        "to_date": "19-06-2026",
+        "completed_at": "2026-06-19T17:44:00+05:30",
+        "from_date": "17-06-2026"
+      },
+      "ORANGE O TEC ENTERPRISES PVT LTD - FY24-26": {
+        "to_date": "19-06-2026",
+        "completed_at": "2026-06-19T17:44:08+05:30",
+        "from_date": "17-06-2026"
       }
     },
     "chequereturn": {
       "ORANGE O TEC ENTERPRISES PRIVATE LIMITED-NOIDA - (from 1-Apr-25)": {
-        "to_date": "28-05-2026",
-        "completed_at": "2026-05-29T15:24:29+05:30"
+        "to_date": "17-06-2026",
+        "completed_at": "2026-06-17T12:09:57+05:30",
+        "from_date": "14-06-2026"
       },
       "ORANGE O TEC ENTERPRISES PVT LTD - (from 1-Apr-24)": {
-        "to_date": "28-05-2026",
-        "completed_at": "2026-05-29T15:24:29+05:30"
+        "to_date": "17-06-2026",
+        "completed_at": "2026-06-17T12:10:07+05:30",
+        "from_date": "14-06-2026"
       },
       "ORANGE O TEC PRIVATE LIMITED-NOIDA-(from 1-Apr-25)": {
-        "to_date": "28-05-2026",
-        "completed_at": "2026-05-29T15:24:29+05:30"
+        "to_date": "19-06-2026",
+        "completed_at": "2026-06-19T17:45:09+05:30",
+        "from_date": "17-06-2026"
       },
       "ORANGE O TEC PRIVATE LIMITED (01-04-25TO31-03-27)": {
-        "to_date": "28-05-2026",
-        "completed_at": "2026-05-29T15:24:29+05:30"
+        "to_date": "19-06-2026",
+        "completed_at": "2026-06-19T17:44:59+05:30",
+        "from_date": "17-06-2026"
+      },
+      "COLORIX DIGITAL PRINTING SOLUTIONS LLP - (from 1-Apr-20)": {
+        "to_date": "19-06-2026",
+        "completed_at": "2026-06-19T17:44:31+05:30",
+        "from_date": "17-06-2026"
+      },
+      "ORANGE O TEC ENTERPRISES PRIVATE LIMITED-NOIDA - (from 1-Apr-25) - (from 1-Apr-26)": {
+        "to_date": "17-06-2026",
+        "completed_at": "2026-06-17T12:10:03+05:30",
+        "from_date": "14-06-2026"
+      },
+      "ORANGE O TEC ENTERPRISES PRIVATE LIMITED-NOIDA -FY 26-27": {
+        "to_date": "19-06-2026",
+        "completed_at": "2026-06-19T17:44:42+05:30",
+        "from_date": "17-06-2026"
+      },
+      "ORANGE O TEC ENTERPRISES PVT LTD - FY24-26": {
+        "to_date": "19-06-2026",
+        "completed_at": "2026-06-19T17:44:48+05:30",
+        "from_date": "17-06-2026"
       }
     },
     "credit_limit": {
       "ORANGE O TEC ENTERPRISES PRIVATE LIMITED-NOIDA - (from 1-Apr-25)": {
         "to_date": null,
-        "completed_at": "2026-05-29T15:24:29+05:30"
+        "completed_at": "2026-06-17T12:10:30+05:30"
       },
       "ORANGE O TEC ENTERPRISES PVT LTD - (from 1-Apr-24)": {
         "to_date": null,
-        "completed_at": "2026-05-29T15:24:29+05:30"
+        "completed_at": "2026-06-17T12:10:49+05:30"
       },
       "ORANGE O TEC PRIVATE LIMITED-NOIDA-(from 1-Apr-25)": {
         "to_date": null,
-        "completed_at": "2026-05-29T15:24:29+05:30"
+        "completed_at": "2026-06-19T17:45:44+05:30"
       },
       "ORANGE O TEC PRIVATE LIMITED (01-04-25TO31-03-27)": {
         "to_date": null,
-        "completed_at": "2026-05-29T15:24:29+05:30"
+        "completed_at": "2026-06-19T17:45:38+05:30"
+      },
+      "COLORIX DIGITAL PRINTING SOLUTIONS LLP - (from 1-Apr-20)": {
+        "to_date": null,
+        "completed_at": "2026-06-19T17:45:16+05:30"
+      },
+      "ORANGE O TEC ENTERPRISES PRIVATE LIMITED-NOIDA - (from 1-Apr-25) - (from 1-Apr-26)": {
+        "to_date": null,
+        "completed_at": "2026-06-17T12:10:38+05:30"
+      },
+      "ORANGE O TEC ENTERPRISES PRIVATE LIMITED-NOIDA -FY 26-27": {
+        "to_date": null,
+        "completed_at": "2026-06-19T17:45:25+05:30"
+      },
+      "ORANGE O TEC ENTERPRISES PVT LTD - FY24-26": {
+        "to_date": null,
+        "completed_at": "2026-06-19T17:45:31+05:30"
       }
     },
     "salesdebitnote": {
       "ORANGE O TEC ENTERPRISES PRIVATE LIMITED-NOIDA - (from 1-Apr-25)": {
-        "to_date": "28-05-2026",
-        "completed_at": "2026-05-29T15:24:29+05:30"
+        "to_date": "17-06-2026",
+        "completed_at": "2026-06-17T12:08:01+05:30",
+        "from_date": "14-06-2026"
       },
       "ORANGE O TEC ENTERPRISES PVT LTD - (from 1-Apr-24)": {
-        "to_date": "28-05-2026",
-        "completed_at": "2026-05-29T15:24:29+05:30"
+        "to_date": "17-06-2026",
+        "completed_at": "2026-06-17T12:08:12+05:30",
+        "from_date": "14-06-2026"
       },
       "ORANGE O TEC PRIVATE LIMITED-NOIDA-(from 1-Apr-25)": {
-        "to_date": "28-05-2026",
-        "completed_at": "2026-05-29T15:24:29+05:30"
+        "to_date": "19-06-2026",
+        "completed_at": "2026-06-19T17:43:17+05:30",
+        "from_date": "17-06-2026"
       },
       "ORANGE O TEC PRIVATE LIMITED (01-04-25TO31-03-27)": {
-        "to_date": "28-05-2026",
-        "completed_at": "2026-05-29T15:24:29+05:30"
+        "to_date": "19-06-2026",
+        "completed_at": "2026-06-19T17:43:10+05:30",
+        "from_date": "17-06-2026"
+      },
+      "COLORIX DIGITAL PRINTING SOLUTIONS LLP - (from 1-Apr-20)": {
+        "to_date": "19-06-2026",
+        "completed_at": "2026-06-19T17:42:34+05:30",
+        "from_date": "17-06-2026"
+      },
+      "ORANGE O TEC ENTERPRISES PRIVATE LIMITED-NOIDA - (from 1-Apr-25) - (from 1-Apr-26)": {
+        "to_date": "17-06-2026",
+        "completed_at": "2026-06-17T12:08:06+05:30",
+        "from_date": "14-06-2026"
+      },
+      "ORANGE O TEC ENTERPRISES PRIVATE LIMITED-NOIDA -FY 26-27": {
+        "to_date": "19-06-2026",
+        "completed_at": "2026-06-19T17:42:54+05:30",
+        "from_date": "17-06-2026"
+      },
+      "ORANGE O TEC ENTERPRISES PVT LTD - FY24-26": {
+        "to_date": "19-06-2026",
+        "completed_at": "2026-06-19T17:43:02+05:30",
+        "from_date": "17-06-2026"
       }
     },
     "salesjournal": {
       "ORANGE O TEC ENTERPRISES PRIVATE LIMITED-NOIDA - (from 1-Apr-25)": {
-        "to_date": "28-05-2026",
-        "completed_at": "2026-05-29T15:24:29+05:30"
+        "to_date": "17-06-2026",
+        "completed_at": "2026-06-17T12:08:40+05:30",
+        "from_date": "14-06-2026"
       },
       "ORANGE O TEC ENTERPRISES PVT LTD - (from 1-Apr-24)": {
-        "to_date": "28-05-2026",
-        "completed_at": "2026-05-29T15:24:29+05:30"
+        "to_date": "17-06-2026",
+        "completed_at": "2026-06-17T12:08:52+05:30",
+        "from_date": "14-06-2026"
       },
       "ORANGE O TEC PRIVATE LIMITED-NOIDA-(from 1-Apr-25)": {
-        "to_date": "28-05-2026",
-        "completed_at": "2026-05-29T15:24:29+05:30"
+        "to_date": "19-06-2026",
+        "completed_at": "2026-06-19T17:43:47+05:30",
+        "from_date": "17-06-2026"
       },
       "ORANGE O TEC PRIVATE LIMITED (01-04-25TO31-03-27)": {
-        "to_date": "28-05-2026",
-        "completed_at": "2026-05-29T15:24:29+05:30"
+        "to_date": "19-06-2026",
+        "completed_at": "2026-06-19T17:43:40+05:30",
+        "from_date": "17-06-2026"
+      },
+      "COLORIX DIGITAL PRINTING SOLUTIONS LLP - (from 1-Apr-20)": {
+        "to_date": "19-06-2026",
+        "completed_at": "2026-06-19T17:43:23+05:30",
+        "from_date": "17-06-2026"
+      },
+      "ORANGE O TEC ENTERPRISES PRIVATE LIMITED-NOIDA - (from 1-Apr-25) - (from 1-Apr-26)": {
+        "to_date": "17-06-2026",
+        "completed_at": "2026-06-17T12:08:45+05:30",
+        "from_date": "14-06-2026"
+      },
+      "ORANGE O TEC ENTERPRISES PRIVATE LIMITED-NOIDA -FY 26-27": {
+        "to_date": "19-06-2026",
+        "completed_at": "2026-06-19T17:43:28+05:30",
+        "from_date": "17-06-2026"
+      },
+      "ORANGE O TEC ENTERPRISES PVT LTD - FY24-26": {
+        "to_date": "19-06-2026",
+        "completed_at": "2026-06-19T17:43:34+05:30",
+        "from_date": "17-06-2026"
       }
     },
     "ledger_master": {},
-    "stock_item_master": {}
+    "stock_item_master": {},
+    "billwise": {
+      "ORANGE O TEC ENTERPRISES PRIVATE LIMITED-NOIDA - (from 1-Apr-25)": {
+        "to_date": null,
+        "completed_at": "2026-06-17T12:16:45+05:30"
+      },
+      "ORANGE O TEC ENTERPRISES PVT LTD - (from 1-Apr-24)": {
+        "to_date": null,
+        "completed_at": "2026-06-17T12:20:40+05:30"
+      },
+      "ORANGE O TEC PRIVATE LIMITED (01-04-25TO31-03-27)": {
+        "to_date": null,
+        "completed_at": "2026-06-19T17:59:54+05:30"
+      },
+      "ORANGE O TEC PRIVATE LIMITED-NOIDA-(from 1-Apr-25)": {
+        "to_date": null,
+        "completed_at": "2026-06-19T18:01:26+05:30"
+      },
+      "COLORIX DIGITAL PRINTING SOLUTIONS LLP - (from 1-Apr-20)": {
+        "to_date": null,
+        "completed_at": "2026-06-19T17:47:42+05:30"
+      },
+      "ORANGE O TEC ENTERPRISES PRIVATE LIMITED-NOIDA - (from 1-Apr-25) - (from 1-Apr-26)": {
+        "to_date": null,
+        "completed_at": "2026-06-17T12:17:41+05:30"
+      },
+      "ORANGE O TEC ENTERPRISES PRIVATE LIMITED-NOIDA -FY 26-27": {
+        "to_date": null,
+        "completed_at": "2026-06-19T17:48:29+05:30"
+      },
+      "ORANGE O TEC ENTERPRISES PVT LTD - FY24-26": {
+        "to_date": null,
+        "completed_at": "2026-06-19T17:50:49+05:30"
+      }
+    }
   },
   "step_durations": {
     "sales:fetch:ORANGE O TEC ENTERPRISES PRIVATE LIMITED-NOIDA - (from 1-Apr-25)": [
-      1.53,
-      1.35,
-      1.51,
-      2.05,
-      2.05,
-      2.55,
-      5.12,
-      3.27,
-      8.34,
-      6.64
+      1.93,
+      2.14,
+      5.21,
+      2.06,
+      3.03,
+      13.41,
+      6.24,
+      3.67,
+      4.39,
+      6.96
     ],
     "sales:fetch:*": [
-      10.76,
-      4.14,
-      8.34,
-      6.64,
-      35.67,
-      27.51,
-      51.58,
-      36.77,
-      12.03,
-      19.22
+      3.49,
+      4.35,
+      9.88,
+      1.33,
+      46.4,
+      3.26,
+      3.58,
+      9.06,
+      2.64,
+      7.46
     ],
     "sales:push:ORANGE O TEC ENTERPRISES PRIVATE LIMITED-NOIDA - (from 1-Apr-25)": [
-      6.91,
-      5.91,
-      5.78,
-      5.4,
-      5.99,
-      5.62,
-      6.17,
-      13.23,
-      30.51,
-      29.12
+      6.5,
+      6.92,
+      6.36,
+      5.47,
+      10.13,
+      11.09,
+      7.0,
+      6.79,
+      9.59,
+      9.04
     ],
     "sales:push:*": [
-      7.76,
-      7.52,
-      30.51,
-      29.12,
-      28.38,
-      26.65,
-      29.4,
-      31.45,
-      30.99,
-      31.54
+      8.72,
+      10.6,
+      5.76,
+      4.78,
+      6.73,
+      9.44,
+      7.37,
+      7.53,
+      13.4,
+      9.34
     ],
     "sales:fetch:ORANGE O TEC ENTERPRISES PVT LTD - (from 1-Apr-24)": [
-      4.11,
-      4.57,
-      4.21,
-      12.29,
-      27.98,
-      41.21,
-      29.5,
-      5.73,
-      35.67,
-      27.51
+      4.93,
+      2.82,
+      27.25,
+      3.33,
+      7.73,
+      58.09,
+      20.22,
+      7.69,
+      9.87,
+      14.58
     ],
     "sales:push:ORANGE O TEC ENTERPRISES PVT LTD - (from 1-Apr-24)": [
-      6.18,
-      5.49,
-      6.72,
-      6.0,
-      5.79,
-      5.77,
-      6.16,
-      7.71,
-      28.38,
-      26.65
+      9.64,
+      6.13,
+      6.36,
+      5.99,
+      6.49,
+      9.98,
+      9.41,
+      6.9,
+      7.0,
+      7.84
     ],
     "sales:fetch:ORANGE O TEC PRIVATE LIMITED (01-04-25TO31-03-26)": [
       188.48,
@@ -227,100 +421,100 @@
       31.45
     ],
     "sales:fetch:ORANGE O TEC PRIVATE LIMITED-NOIDA-(from 1-Apr-25)": [
-      26.37,
-      20.25,
-      25.4,
-      23.78,
-      16.67,
-      16.04,
-      15.9,
-      4.14,
-      12.03,
-      19.22
+      20.16,
+      3.57,
+      5.81,
+      23.75,
+      7.83,
+      5.75,
+      5.66,
+      9.13,
+      46.4,
+      7.46
     ],
     "sales:push:ORANGE O TEC PRIVATE LIMITED-NOIDA-(from 1-Apr-25)": [
-      6.05,
-      5.96,
-      5.98,
-      5.79,
-      6.65,
-      6.22,
-      6.16,
-      7.52,
-      30.99,
-      31.54
+      8.14,
+      8.37,
+      6.74,
+      7.31,
+      6.99,
+      6.73,
+      6.2,
+      9.15,
+      6.73,
+      9.34
     ],
     "bankreceipt:fetch:ORANGE O TEC ENTERPRISES PRIVATE LIMITED-NOIDA - (from 1-Apr-25)": [
-      1.13,
-      0.85,
-      1.01,
-      0.95,
-      1.08,
-      0.91,
-      1.7,
-      0.93,
-      1.13,
-      0.92
+      1.32,
+      1.06,
+      1.57,
+      1.14,
+      1.2,
+      2.17,
+      1.55,
+      1.1,
+      1.47,
+      1.63
     ],
     "bankreceipt:fetch:*": [
-      2.42,
-      4.35,
-      2.97,
-      2.86,
-      2.77,
-      3.18,
-      0.92,
-      1.09,
-      1.64,
-      1.13
+      1.42,
+      2.23,
+      6.18,
+      3.05,
+      1.39,
+      1.37,
+      1.72,
+      2.19,
+      4.86,
+      1.97
     ],
     "bankreceipt:push:ORANGE O TEC ENTERPRISES PRIVATE LIMITED-NOIDA - (from 1-Apr-25)": [
-      4.55,
-      5.36,
-      5.42,
-      4.36,
-      4.62,
-      4.69,
-      3.63,
-      4.26,
-      4.01,
-      5.32
+      4.89,
+      4.76,
+      4.95,
+      5.16,
+      4.83,
+      7.24,
+      4.82,
+      3.95,
+      5.15,
+      5.01
     ],
     "bankreceipt:push:*": [
-      3.97,
-      4.08,
-      3.88,
-      4.67,
-      4.15,
-      3.97,
-      5.32,
-      3.89,
-      4.08,
-      3.88
+      10.0,
+      7.99,
+      6.92,
+      5.94,
+      5.28,
+      5.68,
+      5.02,
+      5.78,
+      5.63,
+      4.45
     ],
     "bankreceipt:fetch:ORANGE O TEC ENTERPRISES PVT LTD - (from 1-Apr-24)": [
-      1.31,
-      1.38,
-      1.59,
-      1.28,
-      1.65,
-      1.32,
-      1.64,
-      2.75,
-      5.28,
-      1.09
+      1.76,
+      1.37,
+      4.23,
+      1.4,
+      1.36,
+      4.57,
+      2.66,
+      1.42,
+      1.82,
+      2.34
     ],
     "bankreceipt:push:ORANGE O TEC ENTERPRISES PVT LTD - (from 1-Apr-24)": [
-      4.35,
-      5.9,
+      4.49,
+      3.96,
+      4.76,
+      4.16,
+      5.12,
+      6.09,
+      6.16,
+      4.98,
       5.09,
-      4.94,
-      5.51,
-      4.93,
-      5.19,
-      5.49,
-      4.28,
-      3.89
+      5.59
     ],
     "bankreceipt:fetch:ORANGE O TEC PRIVATE LIMITED (01-04-25TO31-03-26)": [
       14.02,
@@ -347,100 +541,100 @@
       4.08
     ],
     "bankreceipt:fetch:ORANGE O TEC PRIVATE LIMITED-NOIDA-(from 1-Apr-25)": [
-      2.04,
-      1.99,
-      1.93,
-      2.42,
-      4.35,
-      2.97,
-      2.86,
-      2.77,
-      3.18,
-      1.13
+      3.63,
+      1.23,
+      1.36,
+      3.96,
+      3.23,
+      1.37,
+      1.39,
+      1.54,
+      1.39,
+      1.97
     ],
     "bankreceipt:push:ORANGE O TEC PRIVATE LIMITED-NOIDA-(from 1-Apr-25)": [
-      4.26,
-      4.51,
-      4.39,
-      3.97,
-      4.08,
-      3.88,
-      4.67,
-      4.15,
-      3.97,
-      3.88
+      4.77,
+      4.75,
+      4.94,
+      6.83,
+      9.11,
+      3.84,
+      4.95,
+      4.47,
+      5.28,
+      4.45
     ],
     "salescreditnote:fetch:ORANGE O TEC ENTERPRISES PRIVATE LIMITED-NOIDA - (from 1-Apr-25)": [
-      0.82,
-      0.85,
-      0.93,
-      0.9,
-      0.88,
-      0.93,
-      1.09,
-      0.94,
-      1.36,
-      1.14
+      1.19,
+      1.23,
+      1.2,
+      1.08,
+      1.1,
+      1.55,
+      1.34,
+      1.2,
+      1.5,
+      2.01
     ],
     "salescreditnote:fetch:*": [
-      2.05,
-      1.84,
-      1.58,
-      4.39,
-      2.67,
-      2.67,
-      1.14,
-      1.15,
-      1.51,
-      1.33
+      2.1,
+      1.46,
+      3.48,
+      4.42,
+      3.64,
+      1.48,
+      1.92,
+      2.68,
+      8.85,
+      2.85
     ],
     "salescreditnote:push:ORANGE O TEC ENTERPRISES PRIVATE LIMITED-NOIDA - (from 1-Apr-25)": [
-      3.32,
-      2.88,
+      4.7,
+      3.77,
       3.06,
-      3.76,
-      2.83,
-      3.07,
-      2.96,
-      3.17,
       3.03,
-      3.46
+      4.54,
+      6.37,
+      5.59,
+      2.83,
+      2.89,
+      4.39
     ],
     "salescreditnote:push:*": [
-      3.49,
-      3.55,
-      3.74,
-      8.49,
-      6.0,
-      9.47,
-      3.46,
-      3.54,
-      3.99,
-      3.4
+      3.94,
+      4.37,
+      7.21,
+      7.16,
+      7.24,
+      4.8,
+      2.95,
+      3.9,
+      6.32,
+      7.92
     ],
     "salescreditnote:fetch:ORANGE O TEC ENTERPRISES PVT LTD - (from 1-Apr-24)": [
-      1.16,
-      1.16,
-      1.42,
-      1.28,
-      1.14,
+      1.67,
+      3.75,
+      3.88,
       1.62,
-      4.38,
-      2.51,
-      4.39,
-      1.15
+      1.68,
+      3.83,
+      3.41,
+      2.04,
+      2.43,
+      3.95
     ],
     "salescreditnote:push:ORANGE O TEC ENTERPRISES PVT LTD - (from 1-Apr-24)": [
-      3.38,
-      3.27,
-      3.6,
-      3.14,
-      3.13,
-      3.45,
-      2.99,
-      3.69,
-      3.99,
-      3.54
+      3.33,
+      2.88,
+      3.88,
+      3.07,
+      3.35,
+      3.1,
+      5.38,
+      3.59,
+      3.62,
+      4.06
     ],
     "salescreditnote:fetch:ORANGE O TEC PRIVATE LIMITED (01-04-25TO31-03-26)": [
       14.05,
@@ -467,100 +661,100 @@
       3.99
     ],
     "salescreditnote:fetch:ORANGE O TEC PRIVATE LIMITED-NOIDA-(from 1-Apr-25)": [
-      2.78,
-      1.57,
-      2.14,
-      2.05,
-      1.84,
-      1.58,
-      4.39,
-      2.67,
-      2.67,
-      1.33
+      2.75,
+      1.53,
+      1.8,
+      2.91,
+      3.68,
+      1.62,
+      1.69,
+      2.48,
+      3.64,
+      2.85
     ],
     "salescreditnote:push:ORANGE O TEC PRIVATE LIMITED-NOIDA-(from 1-Apr-25)": [
-      2.82,
-      3.46,
-      3.74,
-      3.49,
-      3.55,
-      3.74,
-      8.49,
-      6.0,
-      9.47,
-      3.4
+      3.36,
+      3.42,
+      4.49,
+      4.5,
+      5.37,
+      2.78,
+      3.17,
+      4.46,
+      7.24,
+      7.92
     ],
     "chequereturn:fetch:ORANGE O TEC ENTERPRISES PRIVATE LIMITED-NOIDA - (from 1-Apr-25)": [
-      1.84,
-      2.37,
-      1.66,
+      1.2,
+      1.28,
+      1.46,
+      1.36,
+      1.21,
+      2.32,
+      1.9,
+      1.12,
       1.63,
-      1.7,
-      1.7,
-      1.51,
-      1.49,
-      1.6,
-      0.83
+      1.54
     ],
     "chequereturn:fetch:*": [
-      1.38,
-      1.84,
-      2.13,
-      1.86,
-      1.77,
-      1.97,
-      0.83,
-      1.04,
-      2.83,
-      0.98
+      3.55,
+      1.45,
+      1.67,
+      2.67,
+      1.63,
+      1.32,
+      2.39,
+      2.52,
+      5.02,
+      2.42
     ],
     "chequereturn:push:ORANGE O TEC ENTERPRISES PRIVATE LIMITED-NOIDA - (from 1-Apr-25)": [
-      2.73,
-      3.52,
-      2.88,
-      2.82,
-      2.78,
-      2.89,
-      2.87,
-      3.01,
-      2.82,
-      4.35
+      4.23,
+      3.6,
+      2.98,
+      3.25,
+      3.7,
+      5.17,
+      4.59,
+      3.3,
+      3.18,
+      2.95
     ],
     "chequereturn:push:*": [
-      2.66,
-      2.67,
-      2.89,
-      2.69,
-      2.76,
-      2.86,
-      4.35,
-      2.92,
-      2.86,
-      3.98
+      3.88,
+      3.38,
+      2.9,
+      3.36,
+      3.0,
+      4.73,
+      7.92,
+      3.9,
+      5.57,
+      8.26
     ],
     "chequereturn:fetch:ORANGE O TEC ENTERPRISES PVT LTD - (from 1-Apr-24)": [
-      1.66,
-      1.51,
-      2.18,
-      1.86,
-      2.33,
-      2.6,
-      2.52,
-      3.03,
-      3.48,
-      1.04
+      1.54,
+      1.32,
+      3.1,
+      1.34,
+      1.44,
+      3.64,
+      3.77,
+      1.43,
+      1.63,
+      1.72
     ],
     "chequereturn:push:ORANGE O TEC ENTERPRISES PVT LTD - (from 1-Apr-24)": [
-      2.7,
       2.97,
-      2.87,
-      3.17,
-      3.58,
-      2.71,
-      2.73,
-      2.69,
-      2.63,
-      2.92
+      2.97,
+      3.66,
+      3.43,
+      2.45,
+      7.16,
+      6.25,
+      3.26,
+      3.65,
+      3.01
     ],
     "chequereturn:fetch:ORANGE O TEC PRIVATE LIMITED (01-04-25TO31-03-26)": [
       16.08,
@@ -587,76 +781,100 @@
       2.86
     ],
     "chequereturn:fetch:ORANGE O TEC PRIVATE LIMITED-NOIDA-(from 1-Apr-25)": [
-      1.71,
-      1.76,
-      1.4,
-      1.38,
-      1.84,
-      2.13,
-      1.86,
-      1.77,
-      1.97,
-      0.98
+      2.43,
+      1.18,
+      1.27,
+      2.59,
+      2.36,
+      1.09,
+      1.52,
+      1.72,
+      1.63,
+      2.42
     ],
     "chequereturn:push:ORANGE O TEC PRIVATE LIMITED-NOIDA-(from 1-Apr-25)": [
-      2.74,
-      2.63,
-      2.77,
-      2.66,
-      2.67,
-      2.89,
-      2.69,
-      2.76,
-      2.86,
-      3.98
+      3.04,
+      3.15,
+      3.01,
+      4.94,
+      4.07,
+      2.98,
+      3.38,
+      4.07,
+      3.0,
+      8.26
     ],
     "credit_limit:fetch:ORANGE O TEC ENTERPRISES PRIVATE LIMITED-NOIDA - (from 1-Apr-25)": [
-      1.87,
       0.56,
       0.73,
-      0.98
+      0.98,
+      1.0,
+      0.74,
+      0.77,
+      1.56,
+      0.79,
+      1.33,
+      1.09
     ],
     "credit_limit:fetch:*": [
-      1.61,
-      0.73,
-      0.73,
-      6.95,
-      3.6,
-      1.21,
-      0.98,
-      2.59,
-      1.16,
-      1.45
+      1.04,
+      1.73,
+      3.34,
+      2.08,
+      1.05,
+      1.28,
+      4.97,
+      1.04,
+      2.05,
+      1.17
     ],
     "credit_limit:push:ORANGE O TEC ENTERPRISES PRIVATE LIMITED-NOIDA - (from 1-Apr-25)": [
-      3.98,
       2.88,
       4.82,
-      3.44
+      3.44,
+      4.04,
+      4.83,
+      4.13,
+      8.15,
+      3.22,
+      6.58,
+      3.94
     ],
     "credit_limit:push:*": [
-      2.64,
-      3.02,
-      4.82,
-      3.74,
-      3.94,
-      3.65,
-      3.44,
-      3.19,
-      3.24,
-      2.97
+      5.08,
+      5.89,
+      4.77,
+      5.44,
+      5.38,
+      5.28,
+      4.62,
+      4.13,
+      4.98,
+      5.31
     ],
     "credit_limit:fetch:ORANGE O TEC ENTERPRISES PVT LTD - (from 1-Apr-24)": [
-      2.78,
       0.78,
       6.95,
-      2.59
+      2.59,
+      6.17,
+      4.59,
+      0.71,
+      4.67,
+      1.05,
+      1.09,
+      4.94
     ],
     "credit_limit:push:ORANGE O TEC ENTERPRISES PVT LTD - (from 1-Apr-24)": [
-      2.74,
       2.62,
       3.74,
-      3.19
+      3.19,
+      4.05,
+      4.1,
+      3.98,
+      5.77,
+      3.37,
+      7.12,
+      6.31
     ],
     "credit_limit:fetch:ORANGE O TEC PRIVATE LIMITED (01-04-25TO31-03-26)": [
       7.95,
@@ -671,88 +889,100 @@
       3.24
     ],
     "credit_limit:fetch:ORANGE O TEC PRIVATE LIMITED-NOIDA-(from 1-Apr-25)": [
-      1.72,
-      0.73,
-      1.21,
-      1.45
+      1.45,
+      1.03,
+      1.9,
+      0.74,
+      1.59,
+      0.95,
+      2.34,
+      1.36,
+      1.05,
+      1.17
     ],
     "credit_limit:push:ORANGE O TEC PRIVATE LIMITED-NOIDA-(from 1-Apr-25)": [
-      4.82,
-      3.02,
-      3.65,
-      2.97
+      2.97,
+      3.55,
+      3.79,
+      3.35,
+      4.07,
+      3.33,
+      6.63,
+      4.39,
+      5.38,
+      5.31
     ],
     "salesdebitnote:fetch:ORANGE O TEC ENTERPRISES PRIVATE LIMITED-NOIDA - (from 1-Apr-25)": [
-      0.98,
-      0.82,
-      0.94,
-      1.01,
-      1.01,
-      0.92,
-      0.95,
-      1.03,
-      0.83,
-      0.88
+      1.19,
+      1.35,
+      1.06,
+      1.38,
+      1.15,
+      1.68,
+      1.64,
+      1.24,
+      1.23,
+      1.61
     ],
     "salesdebitnote:fetch:*": [
-      1.31,
-      1.26,
-      1.38,
-      1.1,
-      1.22,
-      1.31,
-      0.88,
-      1.23,
-      1.81,
-      1.16
+      3.02,
+      3.27,
+      2.14,
+      6.22,
+      4.68,
+      2.07,
+      1.72,
+      3.92,
+      3.47,
+      2.87
     ],
     "salesdebitnote:push:ORANGE O TEC ENTERPRISES PRIVATE LIMITED-NOIDA - (from 1-Apr-25)": [
-      3.01,
-      4.94,
-      3.82,
-      4.25,
-      3.43,
-      2.94,
-      3.22,
-      2.88,
+      4.1,
+      3.52,
       2.89,
-      3.33
+      2.95,
+      3.15,
+      4.68,
+      4.16,
+      2.68,
+      4.75,
+      3.46
     ],
     "salesdebitnote:push:*": [
-      2.95,
-      3.44,
-      4.3,
-      3.02,
-      3.68,
-      2.94,
-      3.33,
-      2.54,
-      2.6,
-      2.72
+      7.47,
+      5.13,
+      5.13,
+      7.26,
+      4.5,
+      6.56,
+      17.65,
+      4.82,
+      4.54,
+      4.19
     ],
     "salesdebitnote:fetch:ORANGE O TEC ENTERPRISES PVT LTD - (from 1-Apr-24)": [
-      1.38,
-      1.16,
-      1.29,
-      1.15,
-      1.11,
-      1.37,
-      1.33,
-      1.16,
-      1.34,
-      1.23
+      1.62,
+      1.85,
+      1.55,
+      1.49,
+      1.57,
+      2.58,
+      2.31,
+      1.74,
+      2.07,
+      2.59
     ],
     "salesdebitnote:push:ORANGE O TEC ENTERPRISES PVT LTD - (from 1-Apr-24)": [
-      3.16,
-      3.08,
-      3.05,
-      2.9,
-      2.88,
-      3.1,
+      4.36,
+      3.19,
+      2.85,
       2.8,
-      2.9,
-      2.79,
-      2.54
+      2.65,
+      4.49,
+      4.7,
+      2.87,
+      3.68,
+      3.79
     ],
     "salesdebitnote:fetch:ORANGE O TEC PRIVATE LIMITED (01-04-25TO31-03-26)": [
       2.43,
@@ -779,100 +1009,100 @@
       2.6
     ],
     "salesdebitnote:fetch:ORANGE O TEC PRIVATE LIMITED-NOIDA-(from 1-Apr-25)": [
-      1.45,
-      1.46,
-      1.49,
-      1.31,
-      1.26,
-      1.38,
-      1.1,
-      1.22,
-      1.31,
-      1.16
+      1.98,
+      2.08,
+      1.57,
+      2.22,
+      2.12,
+      1.99,
+      2.61,
+      2.98,
+      4.68,
+      2.87
     ],
     "salesdebitnote:push:ORANGE O TEC PRIVATE LIMITED-NOIDA-(from 1-Apr-25)": [
-      3.01,
-      2.95,
+      2.86,
+      3.08,
+      2.53,
+      3.1,
+      2.91,
+      3.14,
+      3.16,
       3.24,
-      2.95,
-      3.44,
-      4.3,
-      3.02,
-      3.68,
-      2.94,
-      2.72
+      4.5,
+      4.19
     ],
     "salesjournal:fetch:ORANGE O TEC ENTERPRISES PRIVATE LIMITED-NOIDA - (from 1-Apr-25)": [
-      1.33,
-      1.44,
-      2.72,
-      1.12,
-      1.2,
-      1.35,
-      1.32,
-      1.39,
-      1.39,
-      0.85
+      1.18,
+      1.51,
+      1.0,
+      1.19,
+      1.06,
+      1.59,
+      1.62,
+      1.03,
+      1.45,
+      1.86
     ],
     "salesjournal:fetch:*": [
-      3.24,
-      2.83,
-      2.69,
-      2.63,
-      2.44,
-      3.21,
-      0.85,
-      1.07,
-      1.78,
-      0.94
+      1.66,
+      2.41,
+      2.59,
+      3.27,
+      1.62,
+      1.59,
+      1.42,
+      1.85,
+      2.8,
+      1.9
     ],
     "salesjournal:push:ORANGE O TEC ENTERPRISES PRIVATE LIMITED-NOIDA - (from 1-Apr-25)": [
-      3.34,
-      2.87,
-      2.77,
-      2.77,
-      2.67,
-      2.89,
-      3.2,
+      4.56,
+      4.01,
       3.04,
-      2.94,
-      3.61
+      3.12,
+      3.34,
+      4.5,
+      4.39,
+      2.92,
+      3.47,
+      3.23
     ],
     "salesjournal:push:*": [
-      2.85,
-      2.86,
-      3.7,
-      2.77,
-      3.64,
-      3.47,
-      3.61,
-      2.87,
-      3.0,
-      3.0
+      4.96,
+      5.24,
+      6.13,
+      5.09,
+      3.62,
+      3.87,
+      3.92,
+      3.59,
+      3.86,
+      4.23
     ],
     "salesjournal:fetch:ORANGE O TEC ENTERPRISES PVT LTD - (from 1-Apr-24)": [
-      1.89,
-      1.89,
-      2.39,
-      2.03,
-      2.92,
-      2.88,
-      4.64,
-      3.56,
-      10.19,
-      1.07
+      1.38,
+      2.37,
+      3.38,
+      1.38,
+      1.48,
+      3.93,
+      1.97,
+      1.23,
+      1.57,
+      2.63
     ],
     "salesjournal:push:ORANGE O TEC ENTERPRISES PVT LTD - (from 1-Apr-24)": [
-      2.84,
-      2.9,
-      2.87,
-      2.72,
-      2.68,
-      2.96,
-      2.74,
-      2.96,
-      3.68,
-      2.87
+      3.33,
+      3.4,
+      3.55,
+      3.17,
+      2.63,
+      16.01,
+      6.2,
+      2.83,
+      3.69,
+      4.56
     ],
     "salesjournal:fetch:ORANGE O TEC PRIVATE LIMITED (01-04-25TO31-03-26)": [
       19.64,
@@ -899,28 +1129,632 @@
       3.0
     ],
     "salesjournal:fetch:ORANGE O TEC PRIVATE LIMITED-NOIDA-(from 1-Apr-25)": [
-      3.28,
-      2.52,
-      2.79,
-      3.24,
-      2.83,
-      2.69,
-      2.63,
-      2.44,
-      3.21,
-      0.94
+      1.77,
+      1.31,
+      1.04,
+      1.63,
+      1.57,
+      1.09,
+      1.41,
+      2.19,
+      1.62,
+      1.9
     ],
     "salesjournal:push:ORANGE O TEC PRIVATE LIMITED-NOIDA-(from 1-Apr-25)": [
-      2.74,
-      3.02,
-      2.89,
-      2.85,
-      2.86,
       3.7,
-      2.77,
-      3.64,
-      3.47,
-      3.0
+      3.44,
+      2.61,
+      5.19,
+      3.88,
+      2.8,
+      2.94,
+      4.72,
+      3.62,
+      4.23
+    ],
+    "sales:fetch:ORANGE O TEC PRIVATE LIMITED (01-04-25TO31-03-27)": [
+      30.0,
+      5.64,
+      12.86,
+      77.05,
+      50.13,
+      14.85,
+      19.02,
+      3.95,
+      1.33,
+      2.64
+    ],
+    "sales:push:ORANGE O TEC PRIVATE LIMITED (01-04-25TO31-03-27)": [
+      6.67,
+      6.03,
+      8.65,
+      12.48,
+      10.4,
+      6.65,
+      7.77,
+      10.26,
+      4.78,
+      13.4
+    ],
+    "salescreditnote:fetch:ORANGE O TEC PRIVATE LIMITED (01-04-25TO31-03-27)": [
+      10.35,
+      1.72,
+      2.08,
+      9.82,
+      3.98,
+      3.37,
+      3.73,
+      9.85,
+      4.42,
+      8.85
+    ],
+    "salescreditnote:push:ORANGE O TEC PRIVATE LIMITED (01-04-25TO31-03-27)": [
+      4.19,
+      3.87,
+      4.92,
+      3.22,
+      4.2,
+      3.44,
+      3.52,
+      4.33,
+      7.16,
+      6.32
+    ],
+    "salesdebitnote:fetch:ORANGE O TEC PRIVATE LIMITED (01-04-25TO31-03-27)": [
+      2.86,
+      2.48,
+      2.51,
+      3.36,
+      2.8,
+      3.04,
+      3.22,
+      4.9,
+      6.22,
+      3.47
+    ],
+    "salesdebitnote:push:ORANGE O TEC PRIVATE LIMITED (01-04-25TO31-03-27)": [
+      3.4,
+      3.27,
+      2.57,
+      4.37,
+      4.62,
+      2.82,
+      4.71,
+      4.79,
+      7.26,
+      4.54
+    ],
+    "salesjournal:fetch:ORANGE O TEC PRIVATE LIMITED (01-04-25TO31-03-27)": [
+      9.27,
+      3.16,
+      3.84,
+      14.07,
+      5.34,
+      2.36,
+      2.28,
+      3.07,
+      3.27,
+      2.8
+    ],
+    "salesjournal:push:ORANGE O TEC PRIVATE LIMITED (01-04-25TO31-03-27)": [
+      4.38,
+      3.5,
+      2.96,
+      7.15,
+      3.69,
+      2.8,
+      3.04,
+      3.38,
+      5.09,
+      3.86
+    ],
+    "bankreceipt:fetch:ORANGE O TEC PRIVATE LIMITED (01-04-25TO31-03-27)": [
+      14.65,
+      1.7,
+      2.74,
+      21.13,
+      5.54,
+      3.01,
+      3.94,
+      5.05,
+      3.05,
+      4.86
+    ],
+    "bankreceipt:push:ORANGE O TEC PRIVATE LIMITED (01-04-25TO31-03-27)": [
+      5.52,
+      5.21,
+      4.25,
+      6.65,
+      6.65,
+      8.65,
+      6.82,
+      4.92,
+      5.94,
+      5.63
+    ],
+    "chequereturn:fetch:ORANGE O TEC PRIVATE LIMITED (01-04-25TO31-03-27)": [
+      11.7,
+      2.71,
+      3.11,
+      20.29,
+      8.38,
+      2.67,
+      2.98,
+      2.73,
+      2.67,
+      5.02
+    ],
+    "chequereturn:push:ORANGE O TEC PRIVATE LIMITED (01-04-25TO31-03-27)": [
+      3.59,
+      3.48,
+      3.16,
+      7.44,
+      5.68,
+      3.04,
+      3.65,
+      3.48,
+      3.36,
+      5.57
+    ],
+    "credit_limit:fetch:ORANGE O TEC PRIVATE LIMITED (01-04-25TO31-03-27)": [
+      2.38,
+      3.16,
+      1.65,
+      1.95,
+      2.53,
+      2.1,
+      4.78,
+      2.08,
+      2.05
+    ],
+    "credit_limit:push:ORANGE O TEC PRIVATE LIMITED (01-04-25TO31-03-27)": [
+      3.75,
+      4.81,
+      3.48,
+      4.52,
+      3.74,
+      6.32,
+      4.39,
+      5.44,
+      4.98
+    ],
+    "billwise:fetch:ORANGE O TEC ENTERPRISES PRIVATE LIMITED-NOIDA - (from 1-Apr-25)": [
+      31.25,
+      38.89,
+      32.38,
+      37.31,
+      42.44
+    ],
+    "billwise:fetch:*": [
+      39.24,
+      47.84,
+      264.84,
+      605.32,
+      88.84,
+      38.85,
+      40.08,
+      130.6,
+      537.76,
+      85.13
+    ],
+    "billwise:push:ORANGE O TEC ENTERPRISES PRIVATE LIMITED-NOIDA - (from 1-Apr-25)": [
+      8.29,
+      7.8,
+      6.54,
+      7.97,
+      7.2
+    ],
+    "billwise:push:*": [
+      8.3,
+      20.51,
+      11.01,
+      9.69,
+      10.49,
+      10.97,
+      7.08,
+      9.62,
+      7.04,
+      6.69
+    ],
+    "billwise:fetch:ORANGE O TEC ENTERPRISES PVT LTD - (from 1-Apr-24)": [
+      100.93,
+      133.32,
+      105.93,
+      124.75,
+      166.81
+    ],
+    "billwise:push:ORANGE O TEC ENTERPRISES PVT LTD - (from 1-Apr-24)": [
+      8.71,
+      9.89,
+      7.29,
+      7.35,
+      11.82
+    ],
+    "billwise:fetch:ORANGE O TEC PRIVATE LIMITED (01-04-25TO31-03-27)": [
+      407.59,
+      487.82,
+      433.4,
+      517.21,
+      598.28,
+      605.32,
+      537.76
+    ],
+    "billwise:push:ORANGE O TEC PRIVATE LIMITED (01-04-25TO31-03-27)": [
+      8.69,
+      8.26,
+      7.4,
+      7.21,
+      9.54,
+      9.69,
+      7.04
+    ],
+    "billwise:fetch:ORANGE O TEC PRIVATE LIMITED-NOIDA-(from 1-Apr-25)": [
+      60.92,
+      80.21,
+      63.59,
+      79.48,
+      85.53,
+      88.84,
+      85.13
+    ],
+    "billwise:push:ORANGE O TEC PRIVATE LIMITED-NOIDA-(from 1-Apr-25)": [
+      6.92,
+      7.18,
+      20.74,
+      6.33,
+      7.52,
+      10.49,
+      6.69
+    ],
+    "sales:fetch:COLORIX DIGITAL PRINTING SOLUTIONS LLP - (from 1-Apr-20)": [
+      1.87,
+      1.84,
+      1.91,
+      1.98,
+      2.23,
+      2.2,
+      2.6,
+      5.51,
+      3.49,
+      3.26
+    ],
+    "sales:push:COLORIX DIGITAL PRINTING SOLUTIONS LLP - (from 1-Apr-20)": [
+      4.58,
+      4.79,
+      5.55,
+      6.66,
+      5.72,
+      7.93,
+      7.89,
+      21.25,
+      8.72,
+      9.44
+    ],
+    "salescreditnote:fetch:COLORIX DIGITAL PRINTING SOLUTIONS LLP - (from 1-Apr-20)": [
+      1.66,
+      1.97,
+      1.53,
+      1.61,
+      1.68,
+      1.35,
+      1.52,
+      2.2,
+      2.1,
+      1.48
+    ],
+    "salescreditnote:push:COLORIX DIGITAL PRINTING SOLUTIONS LLP - (from 1-Apr-20)": [
+      3.16,
+      3.28,
+      2.8,
+      2.93,
+      2.67,
+      3.39,
+      3.97,
+      4.24,
+      3.94,
+      4.8
+    ],
+    "salesdebitnote:fetch:COLORIX DIGITAL PRINTING SOLUTIONS LLP - (from 1-Apr-20)": [
+      1.65,
+      1.66,
+      1.72,
+      1.73,
+      1.71,
+      1.35,
+      1.71,
+      2.02,
+      3.02,
+      2.07
+    ],
+    "salesdebitnote:push:COLORIX DIGITAL PRINTING SOLUTIONS LLP - (from 1-Apr-20)": [
+      2.67,
+      2.52,
+      2.66,
+      2.6,
+      2.68,
+      3.32,
+      4.39,
+      5.02,
+      7.47,
+      6.56
+    ],
+    "salesjournal:fetch:COLORIX DIGITAL PRINTING SOLUTIONS LLP - (from 1-Apr-20)": [
+      1.59,
+      1.46,
+      1.34,
+      1.41,
+      1.37,
+      1.15,
+      1.47,
+      1.72,
+      1.66,
+      1.59
+    ],
+    "salesjournal:push:COLORIX DIGITAL PRINTING SOLUTIONS LLP - (from 1-Apr-20)": [
+      2.68,
+      2.83,
+      2.71,
+      3.06,
+      2.59,
+      3.6,
+      4.7,
+      4.53,
+      4.96,
+      3.87
+    ],
+    "bankreceipt:fetch:COLORIX DIGITAL PRINTING SOLUTIONS LLP - (from 1-Apr-20)": [
+      1.3,
+      1.63,
+      1.11,
+      1.19,
+      1.11,
+      0.89,
+      1.29,
+      1.54,
+      1.42,
+      1.37
+    ],
+    "bankreceipt:push:COLORIX DIGITAL PRINTING SOLUTIONS LLP - (from 1-Apr-20)": [
+      4.2,
+      3.51,
+      5.63,
+      3.33,
+      2.93,
+      4.57,
+      4.95,
+      5.21,
+      10.0,
+      5.68
+    ],
+    "chequereturn:fetch:COLORIX DIGITAL PRINTING SOLUTIONS LLP - (from 1-Apr-20)": [
+      1.1,
+      1.11,
+      1.19,
+      1.18,
+      1.14,
+      0.95,
+      1.14,
+      1.25,
+      3.55,
+      1.32
+    ],
+    "chequereturn:push:COLORIX DIGITAL PRINTING SOLUTIONS LLP - (from 1-Apr-20)": [
+      2.48,
+      2.95,
+      2.59,
+      2.58,
+      2.68,
+      3.25,
+      4.38,
+      3.7,
+      3.88,
+      4.73
+    ],
+    "billwise:fetch:COLORIX DIGITAL PRINTING SOLUTIONS LLP - (from 1-Apr-20)": [
+      44.31,
+      28.66,
+      34.02,
+      39.94,
+      39.24,
+      38.85
+    ],
+    "billwise:push:COLORIX DIGITAL PRINTING SOLUTIONS LLP - (from 1-Apr-20)": [
+      8.17,
+      8.2,
+      7.66,
+      9.08,
+      8.3,
+      10.97
+    ],
+    "credit_limit:fetch:COLORIX DIGITAL PRINTING SOLUTIONS LLP - (from 1-Apr-20)": [
+      0.78,
+      0.83,
+      1.65,
+      1.04,
+      1.28
+    ],
+    "credit_limit:push:COLORIX DIGITAL PRINTING SOLUTIONS LLP - (from 1-Apr-20)": [
+      3.04,
+      4.29,
+      4.42,
+      5.08,
+      5.28
+    ],
+    "sales:fetch:ORANGE O TEC ENTERPRISES PRIVATE LIMITED-NOIDA - (from 1-Apr-25) - (from 1-Apr-26)": [
+      4.43
+    ],
+    "sales:push:ORANGE O TEC ENTERPRISES PRIVATE LIMITED-NOIDA - (from 1-Apr-25) - (from 1-Apr-26)": [
+      7.75
+    ],
+    "salescreditnote:fetch:ORANGE O TEC ENTERPRISES PRIVATE LIMITED-NOIDA - (from 1-Apr-25) - (from 1-Apr-26)": [
+      1.81
+    ],
+    "salescreditnote:push:ORANGE O TEC ENTERPRISES PRIVATE LIMITED-NOIDA - (from 1-Apr-25) - (from 1-Apr-26)": [
+      4.57
+    ],
+    "salesdebitnote:fetch:ORANGE O TEC ENTERPRISES PRIVATE LIMITED-NOIDA - (from 1-Apr-25) - (from 1-Apr-26)": [
+      1.57
+    ],
+    "salesdebitnote:push:ORANGE O TEC ENTERPRISES PRIVATE LIMITED-NOIDA - (from 1-Apr-25) - (from 1-Apr-26)": [
+      3.6
+    ],
+    "salesjournal:fetch:ORANGE O TEC ENTERPRISES PRIVATE LIMITED-NOIDA - (from 1-Apr-25) - (from 1-Apr-26)": [
+      1.73
+    ],
+    "salesjournal:push:ORANGE O TEC ENTERPRISES PRIVATE LIMITED-NOIDA - (from 1-Apr-25) - (from 1-Apr-26)": [
+      3.13
+    ],
+    "bankreceipt:fetch:ORANGE O TEC ENTERPRISES PRIVATE LIMITED-NOIDA - (from 1-Apr-25) - (from 1-Apr-26)": [
+      1.48
+    ],
+    "bankreceipt:push:ORANGE O TEC ENTERPRISES PRIVATE LIMITED-NOIDA - (from 1-Apr-25) - (from 1-Apr-26)": [
+      4.09
+    ],
+    "chequereturn:fetch:ORANGE O TEC ENTERPRISES PRIVATE LIMITED-NOIDA - (from 1-Apr-25) - (from 1-Apr-26)": [
+      1.85
+    ],
+    "chequereturn:push:ORANGE O TEC ENTERPRISES PRIVATE LIMITED-NOIDA - (from 1-Apr-25) - (from 1-Apr-26)": [
+      3.16
+    ],
+    "credit_limit:fetch:ORANGE O TEC ENTERPRISES PRIVATE LIMITED-NOIDA - (from 1-Apr-25) - (from 1-Apr-26)": [
+      2.25
+    ],
+    "credit_limit:push:ORANGE O TEC ENTERPRISES PRIVATE LIMITED-NOIDA - (from 1-Apr-25) - (from 1-Apr-26)": [
+      4.9
+    ],
+    "billwise:fetch:ORANGE O TEC ENTERPRISES PRIVATE LIMITED-NOIDA - (from 1-Apr-25) - (from 1-Apr-26)": [
+      48.94
+    ],
+    "billwise:push:ORANGE O TEC ENTERPRISES PRIVATE LIMITED-NOIDA - (from 1-Apr-25) - (from 1-Apr-26)": [
+      7.36
+    ],
+    "sales:fetch:ORANGE O TEC ENTERPRISES PRIVATE LIMITED-NOIDA -FY 26-27": [
+      4.35,
+      3.58
+    ],
+    "sales:push:ORANGE O TEC ENTERPRISES PRIVATE LIMITED-NOIDA -FY 26-27": [
+      10.6,
+      7.37
+    ],
+    "sales:fetch:ORANGE O TEC ENTERPRISES PVT LTD - FY24-26": [
+      9.88,
+      9.06
+    ],
+    "sales:push:ORANGE O TEC ENTERPRISES PVT LTD - FY24-26": [
+      5.76,
+      7.53
+    ],
+    "salescreditnote:fetch:ORANGE O TEC ENTERPRISES PRIVATE LIMITED-NOIDA -FY 26-27": [
+      1.46,
+      1.92
+    ],
+    "salescreditnote:push:ORANGE O TEC ENTERPRISES PRIVATE LIMITED-NOIDA -FY 26-27": [
+      4.37,
+      2.95
+    ],
+    "salescreditnote:fetch:ORANGE O TEC ENTERPRISES PVT LTD - FY24-26": [
+      3.48,
+      2.68
+    ],
+    "salescreditnote:push:ORANGE O TEC ENTERPRISES PVT LTD - FY24-26": [
+      7.21,
+      3.9
+    ],
+    "salesdebitnote:fetch:ORANGE O TEC ENTERPRISES PRIVATE LIMITED-NOIDA -FY 26-27": [
+      3.27,
+      1.72
+    ],
+    "salesdebitnote:push:ORANGE O TEC ENTERPRISES PRIVATE LIMITED-NOIDA -FY 26-27": [
+      5.13,
+      17.65
+    ],
+    "salesdebitnote:fetch:ORANGE O TEC ENTERPRISES PVT LTD - FY24-26": [
+      2.14,
+      3.92
+    ],
+    "salesdebitnote:push:ORANGE O TEC ENTERPRISES PVT LTD - FY24-26": [
+      5.13,
+      4.82
+    ],
+    "salesjournal:fetch:ORANGE O TEC ENTERPRISES PRIVATE LIMITED-NOIDA -FY 26-27": [
+      2.41,
+      1.42
+    ],
+    "salesjournal:push:ORANGE O TEC ENTERPRISES PRIVATE LIMITED-NOIDA -FY 26-27": [
+      5.24,
+      3.92
+    ],
+    "salesjournal:fetch:ORANGE O TEC ENTERPRISES PVT LTD - FY24-26": [
+      2.59,
+      1.85
+    ],
+    "salesjournal:push:ORANGE O TEC ENTERPRISES PVT LTD - FY24-26": [
+      6.13,
+      3.59
+    ],
+    "bankreceipt:fetch:ORANGE O TEC ENTERPRISES PRIVATE LIMITED-NOIDA -FY 26-27": [
+      2.23,
+      1.72
+    ],
+    "bankreceipt:push:ORANGE O TEC ENTERPRISES PRIVATE LIMITED-NOIDA -FY 26-27": [
+      7.99,
+      5.02
+    ],
+    "bankreceipt:fetch:ORANGE O TEC ENTERPRISES PVT LTD - FY24-26": [
+      6.18,
+      2.19
+    ],
+    "bankreceipt:push:ORANGE O TEC ENTERPRISES PVT LTD - FY24-26": [
+      6.92,
+      5.78
+    ],
+    "chequereturn:fetch:ORANGE O TEC ENTERPRISES PRIVATE LIMITED-NOIDA -FY 26-27": [
+      1.45,
+      2.39
+    ],
+    "chequereturn:push:ORANGE O TEC ENTERPRISES PRIVATE LIMITED-NOIDA -FY 26-27": [
+      3.38,
+      7.92
+    ],
+    "chequereturn:fetch:ORANGE O TEC ENTERPRISES PVT LTD - FY24-26": [
+      1.67,
+      2.52
+    ],
+    "chequereturn:push:ORANGE O TEC ENTERPRISES PVT LTD - FY24-26": [
+      2.9,
+      3.9
+    ],
+    "credit_limit:fetch:ORANGE O TEC ENTERPRISES PRIVATE LIMITED-NOIDA -FY 26-27": [
+      1.73,
+      4.97
+    ],
+    "credit_limit:push:ORANGE O TEC ENTERPRISES PRIVATE LIMITED-NOIDA -FY 26-27": [
+      5.89,
+      4.62
+    ],
+    "credit_limit:fetch:ORANGE O TEC ENTERPRISES PVT LTD - FY24-26": [
+      3.34,
+      1.04
+    ],
+    "credit_limit:push:ORANGE O TEC ENTERPRISES PVT LTD - FY24-26": [
+      4.77,
+      4.13
+    ],
+    "billwise:fetch:ORANGE O TEC ENTERPRISES PRIVATE LIMITED-NOIDA -FY 26-27": [
+      47.84,
+      40.08
+    ],
+    "billwise:push:ORANGE O TEC ENTERPRISES PRIVATE LIMITED-NOIDA -FY 26-27": [
+      20.51,
+      7.08
+    ],
+    "billwise:fetch:ORANGE O TEC ENTERPRISES PVT LTD - FY24-26": [
+      264.84,
+      130.6
+    ],
+    "billwise:push:ORANGE O TEC ENTERPRISES PVT LTD - FY24-26": [
+      11.01,
+      9.62
     ]
   },
   "defaults_seconds": {

@@ -39,6 +39,10 @@ from _schema import Column, load_columns  # noqa: E402
 SCOPES = ["https://www.googleapis.com/auth/spreadsheets"]
 SHEET_ID_RE = re.compile(r"/spreadsheets/d/([a-zA-Z0-9-_]+)")
 DEDUPE_KEYS = ("company", "location", "voucher_no")
+# The default push UPSERTS by this voucher identity (content-aware): re-fetching a voucher whose
+# data changed in Tally (amount correction, changed reference, etc.) REPLACES its row instead of
+# leaving the stale one; unchanged vouchers are skipped. See _upsert_by_voucher.
+UPSERT_KEYS = ("company", "location", "voucher_no")
 DATE_HEADER = "Date"
 
 
@@ -62,7 +66,12 @@ def authorize() -> Any:
             flow = InstalledAppFlow.from_client_secrets_file(creds_path, SCOPES)
             creds = flow.run_local_server(port=0)
         Path(token_path).write_text(creds.to_json(), encoding="utf-8")
-    return build("sheets", "v4", credentials=creds, cache_discovery=False)
+    # Per-request HTTP timeout so a stalled Sheets API call fails fast instead of hanging forever
+    # (httplib2 has no default timeout — the root cause of the self-heal hang, 2026-06-12).
+    import httplib2
+    from google_auth_httplib2 import AuthorizedHttp
+    authed_http = AuthorizedHttp(creds, http=httplib2.Http(timeout=120))
+    return build("sheets", "v4", http=authed_http, cache_discovery=False)
 
 
 def get_existing_rows(svc: Any, sheet_id: str, tab: str) -> list[list[str]]:
@@ -283,6 +292,74 @@ def _heal_sheet(
     return {"inserted": len(new_rows), "deleted": deleted}
 
 
+def _grid_id(svc: Any, sheet_id: str, tab: str) -> int:
+    meta = svc.spreadsheets().get(spreadsheetId=sheet_id, fields="sheets.properties").execute()
+    for s in meta.get("sheets", []):
+        p = s.get("properties", {})
+        if p.get("title") == tab:
+            return int(p.get("sheetId"))
+    raise SystemExit(f"ERROR: tab '{tab}' not found for upsert row delete")
+
+
+def _upsert_by_voucher(
+    svc: Any,
+    sheet_id: str,
+    tab: str,
+    rows_in: list[dict[str, Any]],
+    columns: list[Column],
+    existing: list[list[str]],
+    upsert_keys: tuple[str, ...],
+) -> dict[str, int]:
+    """Default push = content-aware voucher UPSERT. Groups rows by the voucher identity
+    ``upsert_keys``; for each batch voucher it compares the FULL row-set to the sheet's: identical →
+    skip; changed (any column) → delete the sheet's rows for that voucher + re-append; new → plain
+    append. So an amount correction / changed reference in Tally is reflected on the next covering
+    sync; unchanged vouchers cost nothing; vouchers absent from the batch are never touched.
+    Append-first then delete (existing indices stay valid)."""
+    ncol = len(columns)
+    batch_groups: dict[tuple[str, ...], list[list[Any]]] = {}
+    for r in rows_in:
+        gk = tuple(str(r.get(k, "")).strip() for k in upsert_keys)
+        batch_groups.setdefault(gk, []).append([r.get(c.key, "") for c in columns])
+
+    existing_groups: dict[tuple[str, ...], list[tuple[int, tuple[str, ...]]]] = {}
+    if existing and len(existing) > 1:
+        headers = [h.strip() for h in existing[0]]
+        try:
+            gk_idx = [headers.index(_header_for(columns, k)) for k in upsert_keys]
+        except ValueError as exc:
+            raise SystemExit(f"ERROR: upsert key column missing from sheet headers: {exc}")
+        for gi, row in enumerate(existing[1:], start=1):
+            gk = tuple(row[gk_idx[j]].strip() if gk_idx[j] < len(row) else "" for j in range(len(gk_idx)))
+            content = tuple((row[i].strip() if i < len(row) else "") for i in range(ncol))
+            existing_groups.setdefault(gk, []).append((gi, content))
+
+    to_append: list[list[Any]] = []
+    to_delete: list[int] = []
+    for gk, brows in batch_groups.items():
+        ex = existing_groups.get(gk)
+        batch_norm = sorted(tuple(str(x).strip() for x in r) for r in brows)
+        if ex is not None and sorted(t for (_, t) in ex) == batch_norm:
+            continue                                  # unchanged voucher → leave untouched (no rewrite)
+        if ex:
+            to_delete.extend(gi for (gi, _) in ex)    # changed → drop the stale rows for this voucher
+        to_append.extend(brows)
+
+    append_rows(svc, sheet_id, tab, to_append)
+    if to_delete:
+        grid_id = _grid_id(svc, sheet_id, tab)
+        ranges: list[list[int]] = []
+        for gi in sorted(to_delete):
+            if ranges and gi == ranges[-1][1]:
+                ranges[-1][1] = gi + 1
+            else:
+                ranges.append([gi, gi + 1])
+        reqs = [{"deleteDimension": {"range": {"sheetId": grid_id, "dimension": "ROWS",
+                 "startIndex": s, "endIndex": e}}} for s, e in sorted(ranges, reverse=True)]
+        svc.spreadsheets().batchUpdate(spreadsheetId=sheet_id, body={"requests": reqs}).execute()
+    return {"appended": len(to_append), "deleted": len(to_delete)}
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="Push fetched debit-note JSON to Google Sheets.")
     parser.add_argument("--input", required=True, help="Path to JSON file produced by fetch_tally_debit_notes.py")
@@ -377,23 +454,14 @@ def main() -> int:
     if not existing or all(c == "" for c in (existing[0] if existing else [])):
         existing = get_existing_rows(svc, sheet_id, tab)
 
-    seen = existing_keys(existing, columns)
-
-    new_rows: list[list[Any]] = []
-    skipped = 0
-    for r in rows_in:
-        key = tuple(str(r.get(k, "")).strip() for k in DEDUPE_KEYS)
-        if key in seen:
-            skipped += 1
-            continue
-        new_rows.append([r.get(c.key, "") for c in columns])
-
-    append_rows(svc, sheet_id, tab, new_rows)
+    stats = _upsert_by_voucher(svc, sheet_id, tab, rows_in, columns, existing, UPSERT_KEYS)
 
     summary = {
+        "mode": "upsert",
         "fetched": len(rows_in),
-        "appended": len(new_rows),
-        "skipped": skipped,
+        "appended": stats["appended"],
+        "deleted": stats["deleted"],
+        "skipped": len(rows_in) - stats["appended"],
         "sheet_url": sheet_url,
     }
     print(json.dumps(summary))

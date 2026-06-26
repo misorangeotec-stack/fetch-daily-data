@@ -29,6 +29,8 @@ REFERENCE_DIR = Path(__file__).resolve().parent.parent / "reference"
 SCHEMA_FILE = REFERENCE_DIR / "columns.md"
 COMPANIES_FILE = REFERENCE_DIR / "companies.md"
 SALES_PERSONS_FILE = REFERENCE_DIR / "sales_persons.md"
+OPENING_OVERRIDES_FILE = REFERENCE_DIR / "opening_overrides.md"
+EXCLUDED_LEDGERS_FILE = REFERENCE_DIR / "excluded_ledgers.md"
 
 
 def load_columns(path: Path = SCHEMA_FILE) -> List[Column]:
@@ -44,14 +46,24 @@ def load_columns(path: Path = SCHEMA_FILE) -> List[Column]:
     return columns
 
 
-def load_companies(path: Path = COMPANIES_FILE) -> Dict[str, Tuple[str, str]]:
+def load_companies(path: Path = COMPANIES_FILE) -> Dict[str, Tuple[str, str, str]]:
+    """Map raw Tally company name → (display company, location, apr25_opening mode).
+
+    ``apr25_opening`` is an OPTIONAL 4th column. Value ``zero`` forces every
+    ledger's "Opening Apr-25" to 0 for that company — used for FY-rollover
+    *continuation* books (e.g. the Noida Enterprises FY26-27 book opened
+    1-Apr-2026) whose Tally OPENINGBALANCE is really the carried-forward FY26
+    opening, NOT a true 1-Apr-2025 opening. Without this, the fetcher would
+    mislabel that carry-forward into the Apr-25 column (== Apr-26), phantom-
+    inflating opening balance. Any other/blank value keeps Tally's OPENINGBALANCE.
+    """
     rows = _parse_md_table(path, "Companies", ("tally_name", "company", "location"))
-    out: dict[str, tuple[str, str]] = {}
+    out: dict[str, tuple[str, str, str]] = {}
     for r in rows:
         tally_name = r["tally_name"]
         if tally_name in out:
             raise ValueError(f"Duplicate tally_name '{tally_name}' in {path}.")
-        out[tally_name] = (r["company"], r["location"])
+        out[tally_name] = (r["company"], r["location"], r.get("apr25_opening", "").strip().lower())
     return out
 
 
@@ -66,6 +78,37 @@ def load_sales_persons(path: Path = SALES_PERSONS_FILE) -> Dict[str, str]:
             pass
         out[name] = r["sales_person"]
     return out
+
+
+def load_opening_overrides(path: Path = OPENING_OVERRIDES_FILE) -> Dict[Tuple[str, str, str], Tuple[str, str]]:
+    """Map (company, location, ledger UPPER) → (apr25_amount, apr25_drcr).
+
+    Per-ledger overrides applied AFTER the company-level ``apr25_opening`` flag
+    in the fetcher, so a specific ledger's real opening wins over a company's
+    blanket ``zero`` (see reference/opening_overrides.md). Returns ``{}`` if the
+    file is absent (the override is optional).
+    """
+    if not path.exists():
+        return {}
+    rows = _parse_md_table(path, "Overrides", ("company", "location", "ledger", "apr25_amount", "apr25_drcr"))
+    out: dict[tuple[str, str, str], tuple[str, str]] = {}
+    for r in rows:
+        key = (r["company"].strip(), r["location"].strip(), r["ledger"].strip().upper())
+        out[key] = (r["apr25_amount"].strip(), r["apr25_drcr"].strip())
+    return out
+
+
+def load_excluded_ledgers(path: Path = EXCLUDED_LEDGERS_FILE) -> set[Tuple[str, str, str]]:
+    """Return the set of (company, location, ledger UPPER) ledgers to SKIP.
+
+    The fetcher drops any ledger matching this set even if Tally files it under
+    Sundry Debtors — for GL accruals / control accounts that aren't real debtors
+    (see reference/excluded_ledgers.md). Returns an empty set if the file is absent.
+    """
+    if not path.exists():
+        return set()
+    rows = _parse_md_table(path, "Excluded", ("company", "location", "ledger"))
+    return {(r["company"].strip(), r["location"].strip(), r["ledger"].strip().upper()) for r in rows}
 
 
 def _parse_md_table(path: Path, section: str, expected_header: tuple[str, ...]) -> list[dict[str, str]]:
@@ -96,12 +139,15 @@ def _parse_md_table(path: Path, section: str, expected_header: tuple[str, ...]) 
             f"First {len(expected_lower)} cells must be: {list(expected_header)}."
         )
 
+    # Key each row by the table's ACTUAL header cells (not just the expected
+    # ones), so optional trailing columns — e.g. companies.md's apr25_opening —
+    # are captured. Loaders that don't care about extras simply ignore them.
     rows: list[dict[str, str]] = []
     for row in table_rows[2:]:
         cells = _split_row(row)
         if len(cells) < len(expected_header) or not cells[0]:
             continue
-        rows.append({key: cells[i] for i, key in enumerate(expected_lower)})
+        rows.append({header_cells[i]: cells[i] for i in range(len(header_cells)) if i < len(cells)})
 
     if not rows:
         raise ValueError(f"No data rows found in '## {section}' table in {path}.")

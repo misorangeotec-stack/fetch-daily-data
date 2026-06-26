@@ -28,7 +28,8 @@ skills together — joining or VLOOKUP-ing across sheets depends on this consist
 
 | tally_name                                                       | company    | location |
 |------------------------------------------------------------------|------------|----------|
-| ORANGE O TEC ENTERPRISES PRIVATE LIMITED-NOIDA - (from 1-Apr-25) | Enterprise | Noida    |
-| ORANGE O TEC ENTERPRISES PVT LTD - (from 1-Apr-24)               | Enterprise | Surat    |
+| ORANGE O TEC ENTERPRISES PRIVATE LIMITED-NOIDA -FY 26-27 | Enterprise | Noida    |
+| ORANGE O TEC ENTERPRISES PVT LTD - FY24-26               | Enterprise | Surat    |
 | ORANGE O TEC PRIVATE LIMITED (01-04-25TO31-03-27)                | O-tec      | Surat    |
 | ORANGE O TEC PRIVATE LIMITED-NOIDA-(from 1-Apr-25)               | O-tec      | Noida    |
+| COLORIX DIGITAL PRINTING SOLUTIONS LLP - (from 1-Apr-20) | Colorix    | Surat    |

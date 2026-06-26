@@ -91,10 +91,23 @@ def build_voucher_register_xml(company: str, from_date: str, to_date: str, vch_t
 
 # Parent classes that mark a voucher type as a sales transaction. Tally lets
 # each company pick which "predefined class" to use — most use 'Sales', but
-# some use 'Sales Accounts' (extra word). 'Sales Order' is NOT here: orders
-# are commitments, not booked sales, and shouldn't appear in an outstanding
-# (receivables) report.
-SALES_PARENT_CLASSES: set[str] = {"sales", "sales accounts"}
+# some use 'Sales Accounts' (extra word) and Colorix's company uses 'GST SALES'
+# as its sales class (verified: no other company parents non-sales types to it,
+# so this is safe to include). 'Sales Order' is NOT here: orders are commitments,
+# not booked sales, and shouldn't appear in an outstanding (receivables) report.
+#
+# O-tec/Surat (and others) use a suffixed variant 'Sales Accounts-HSS' as the
+# sales class, so we ALSO accept any parent that starts with 'sales accounts'
+# (see is_sales_parent). 2026-06-20: this exact-set miss returned 0 sales types
+# for O-tec/Surat → 0 sales fetched → a heal pure-deleted real sales. 'Sales Order'
+# does NOT start with 'sales accounts', so it stays excluded.
+SALES_PARENT_CLASSES: set[str] = {"sales", "sales accounts", "gst sales"}
+
+
+def is_sales_parent(parent: str) -> bool:
+    """True if a voucher type's PARENT class marks it as booked sales."""
+    p = (parent or "").strip().lower()
+    return p in SALES_PARENT_CLASSES or p.startswith("sales accounts")
 
 
 def list_sales_voucher_types(host: str, company: str) -> list[str]:
@@ -127,7 +140,7 @@ def list_sales_voucher_types(host: str, company: str) -> list[str]:
     for vt in root.iter("VOUCHERTYPE"):
         name = (vt.attrib.get("NAME") or _text(vt.find("NAME"))).strip()
         parent = _text(vt.find("PARENT"))
-        if name and parent.lower() in SALES_PARENT_CLASSES:
+        if name and is_sales_parent(parent):
             out.append(name)
     # Dedupe while preserving order
     seen: set[str] = set()

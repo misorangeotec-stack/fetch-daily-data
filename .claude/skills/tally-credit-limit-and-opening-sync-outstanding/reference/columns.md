@@ -35,9 +35,12 @@ must be unique.
 
 ## Dedupe / upsert key
 
-The push tool uses the composite **`(company, location, name)`** to upsert
-rows. If those three `key` values are renamed in the table above, update
-`UPSERT_KEYS` in `tools/push_credit_limits_to_sheet.py` as well.
+The push tool upserts on the stable Tally GUID **`ledger_id`** (`ID_KEY` in
+`tools/push_credit_limits_to_sheet.py`). This survives ledger renames — a name
+edit updates the existing row instead of appending a duplicate. The composite
+**`(company, location, name)`** (`UPSERT_KEYS`) is the **fallback** key, used
+only for the rare row that has no `ledger_id` (legacy/manual entries). Changed
+2026-06-24 after 65 duplicate rows accumulated under name-keying (the old key).
 
 ## Sign convention
 

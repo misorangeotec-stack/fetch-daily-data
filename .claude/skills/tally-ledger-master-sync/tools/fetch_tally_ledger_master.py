@@ -386,7 +386,8 @@ def main() -> int:
     no_guid = 0
     no_classification = 0
 
-    for raw_company in target_companies:
+    _total_co = len(target_companies)
+    for _ci, raw_company in enumerate(target_companies, 1):
         if raw_company in company_map:
             display_company, location = company_map[raw_company]
         else:
@@ -399,6 +400,11 @@ def main() -> int:
                 )
                 warned_company.add(raw_company)
             display_company, location = raw_company, ""
+
+        # Progress line (stdout, flushed) so the dashboard can show live per-company movement
+        # while this otherwise-silent loop runs. Non-JSON, so callers that parse the final
+        # JSON summary line are unaffected.
+        print(f"[ledger-master] {_ci}/{_total_co} {display_company} / {location}", flush=True)
 
         groups = fetch_groups(host, raw_company)
         parent_map = build_parent_map(groups)

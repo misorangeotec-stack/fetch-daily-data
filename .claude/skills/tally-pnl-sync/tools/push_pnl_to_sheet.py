@@ -1,24 +1,35 @@
-"""Upsert fetched Sundry Debtor master rows into the credit-limit Google Sheet.
+"""Upsert fetched Profit & Loss rows into the P&L Google Sheet.
 
 For each fetched row, the upsert key is the composite ``(Company, Location,
-$Name)``. If a sheet row already has that key, the script **updates the
+group_id)``. If a sheet row already has that key, the script **updates the
 schema-managed columns in place** (preserving any extra columns the user has
-added to the right). If the key is new, the row is **appended** at the
-bottom.
+added to the right). If the key is new, the row is **appended** at the bottom.
+A re-run is a latest-snapshot refresh: balances and ``as_of_date`` update,
+the row is not duplicated.
+
+Timestamp handling:
+  * ``created_at`` and ``updated_at`` are populated by this push tool, not by
+    the fetch tool (the fetch JSON leaves them blank).
+  * On insert, both timestamps are set to the current run's UTC ISO 8601.
+  * On update, the existing ``created_at`` is preserved; ``updated_at`` is
+    bumped only when the row's other schema columns actually change.
+  * The "did the row change?" comparison **excludes** the timestamp columns
+    so that re-running on unchanged data reports `unchanged`, not `updated`.
 
 Required env vars (loaded from project .env):
     GOOGLE_CREDENTIALS_FILE      path to OAuth client secrets JSON
     GOOGLE_TOKEN_FILE            path to cached OAuth token JSON
-    CREDIT_LIMIT_SHEET_URL       full URL of the destination Google Sheet
-    CREDIT_LIMIT_SHEET_TAB       tab/sheet name within the spreadsheet
+    PNL_SHEET_URL                full URL of the destination Google Sheet
+    PNL_SHEET_TAB                tab/sheet name within the spreadsheet
 
 Usage:
-    python push_credit_limits_to_sheet.py --input .tmp/credit_limits_<ts>.json
+    python push_pnl_to_sheet.py --input .tmp/pnl_<ts>.json
 """
 
 from __future__ import annotations
 
 import argparse
+import datetime as _dt
 import json
 import os
 import re
@@ -38,32 +49,26 @@ from _schema import Column, load_columns  # noqa: E402
 
 SCOPES = ["https://www.googleapis.com/auth/spreadsheets"]
 SHEET_ID_RE = re.compile(r"/spreadsheets/d/([a-zA-Z0-9-_]+)")
-# Primary upsert key = the Tally GUID (`ledger_id`), which is STABLE across
-# ledger renames. Keying on the name triplet instead would append a brand-new
-# row whenever a ledger's name changed by even a dot/space — that produced 65+
-# duplicate rows historically. UPSERT_KEYS is the NAME-based fallback used only
-# for the rare row that has no ledger_id (legacy/manual entries).
-ID_KEY = "ledger_id"
-UPSERT_KEYS = ("company", "location", "name")  # name-based fallback key
+UPSERT_KEYS = ("company", "location", "group_id")  # composite key for upsert
+
+SHEET_URL_ENV = "PNL_SHEET_URL"
+SHEET_TAB_ENV = "PNL_SHEET_TAB"
+
+# These columns are managed by the push tool (not Tally-sourced), so they
+# must be excluded from the "did the row change?" comparison — otherwise
+# every push would mark every row as updated.
+TIMESTAMP_KEYS = ("created_at", "updated_at")
 
 
-def _upsert_key(get: "Any") -> tuple[str, ...]:
-    """Derive a row's upsert key from a field getter ``get(column_key) -> str``.
-
-    Prefers the stable Tally GUID; falls back to the (company, location, name)
-    triplet only when ``ledger_id`` is blank. The leading tag keeps the two
-    key spaces from ever colliding.
-    """
-    lid = str(get(ID_KEY) or "").strip()
-    if lid:
-        return ("id", lid)
-    return ("nm",) + tuple(str(get(k) or "").strip() for k in UPSERT_KEYS)
+def now_iso() -> str:
+    """Single timestamp for this run (UTC, ISO 8601, second precision)."""
+    return _dt.datetime.now(_dt.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 
 
 def extract_sheet_id(url: str) -> str:
     m = SHEET_ID_RE.search(url)
     if not m:
-        raise SystemExit(f"ERROR: could not extract sheet ID from CREDIT_LIMIT_SHEET_URL='{url}'")
+        raise SystemExit(f"ERROR: could not extract sheet ID from {SHEET_URL_ENV}='{url}'")
     return m.group(1)
 
 
@@ -124,44 +129,29 @@ def _header_for(columns: list[Column], key: str) -> str:
     for c in columns:
         if c.key == key:
             return c.header
-    raise ValueError(f"Schema is missing required upsert key '{key}'")
+    raise ValueError(f"Schema is missing required key '{key}'")
 
 
 def existing_key_to_row(existing: list[list[str]], columns: list[Column]) -> dict[tuple[str, ...], int]:
-    """Return a map from upsert-key tuple to 1-based sheet row number.
-
-    Skips data rows whose key is entirely blank (the sheet may have stray
-    blank rows). The first data row is at row 2 (row 1 = header).
-    """
+    """Return a map from upsert-key tuple to 1-based sheet row number."""
     if len(existing) <= 1:
         return {}
     headers = [c.strip() for c in existing[0]]
     try:
-        idx_map = {k: headers.index(_header_for(columns, k)) for k in (ID_KEY, *UPSERT_KEYS)}
+        col_indices = [headers.index(_header_for(columns, k)) for k in UPSERT_KEYS]
     except ValueError as exc:
         raise SystemExit(f"ERROR: upsert column missing from sheet headers: {exc}")
 
     out: dict[tuple[str, ...], int] = {}
-    for offset, row in enumerate(existing[1:], start=2):  # start=2 → 1-based sheet row
-        def _get(k: str, _row: list[str] = row) -> str:
-            i = idx_map[k]
-            return _row[i] if i < len(_row) else ""
-        key = _upsert_key(_get)
-        # Skip fully-blank rows (no GUID and no name triplet).
-        if key == ("nm", "", "", ""):
-            continue
-        out[key] = offset
+    for offset, row in enumerate(existing[1:], start=2):
+        key = tuple(row[i].strip() if i < len(row) else "" for i in col_indices)
+        if any(key):
+            out[key] = offset
     return out
 
 
 def _normalize(v: Any) -> str:
-    """Normalize a cell value for equality comparison.
-
-    Sheets writes values with ``USER_ENTERED`` and parses numeric strings as
-    numbers, so ``"800000.00"`` round-trips back to us as ``"800000"``. To
-    avoid every numeric column reporting as "updated" on a no-op re-run, try
-    a float parse first; fall back to a stripped string.
-    """
+    """Normalize a cell value for equality comparison."""
     s = "" if v is None else str(v).strip()
     if s == "":
         return ""
@@ -185,14 +175,21 @@ def _col_letter(idx_zero_based: int) -> str:
     return letters
 
 
+def _key_index_in_columns(columns: list[Column], key: str) -> int:
+    for i, c in enumerate(columns):
+        if c.key == key:
+            return i
+    raise ValueError(f"key '{key}' not in columns")
+
+
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Upsert Tally credit-limit JSON into Google Sheets.")
-    parser.add_argument("--input", required=True, help="Path to JSON file produced by fetch_tally_credit_limits.py")
+    parser = argparse.ArgumentParser(description="Upsert Tally Profit & Loss JSON into Google Sheets.")
+    parser.add_argument("--input", required=True, help="Path to JSON file produced by fetch_tally_pnl.py")
     args = parser.parse_args()
 
     load_dotenv()
-    sheet_url = os.environ["CREDIT_LIMIT_SHEET_URL"]
-    tab = os.environ.get("CREDIT_LIMIT_SHEET_TAB", "Sheet1")
+    sheet_url = os.environ[SHEET_URL_ENV]
+    tab = os.environ.get(SHEET_TAB_ENV, "Sheet1")
     sheet_id = extract_sheet_id(sheet_url)
 
     columns = load_columns()
@@ -206,9 +203,17 @@ def main() -> int:
 
     key_to_sheet_row = existing_key_to_row(existing, columns)
 
-    # Last column letter for the schema-managed range — anything to the right
-    # of this in the sheet is preserved.
     last_col_letter = _col_letter(len(columns) - 1)
+
+    try:
+        created_at_idx = _key_index_in_columns(columns, "created_at")
+        updated_at_idx = _key_index_in_columns(columns, "updated_at")
+    except ValueError:
+        created_at_idx = -1
+        updated_at_idx = -1
+    excluded_idxs = {i for i in (created_at_idx, updated_at_idx) if i >= 0}
+
+    run_ts = now_iso()
 
     update_data: list[dict[str, Any]] = []
     new_rows: list[list[Any]] = []
@@ -217,8 +222,12 @@ def main() -> int:
     unchanged = 0
 
     for r in rows_in:
-        key = _upsert_key(lambda k: r.get(k, ""))
-        new_values = [r.get(c.key, "") for c in columns]
+        key = tuple(str(r.get(k, "")).strip() for k in UPSERT_KEYS)
+        if not all(key):
+            continue
+
+        new_values: list[Any] = [r.get(c.key, "") for c in columns]
+
         if key in key_to_sheet_row:
             sheet_row = key_to_sheet_row[key]
             existing_values = existing[sheet_row - 1] if sheet_row - 1 < len(existing) else []
@@ -226,35 +235,48 @@ def main() -> int:
                 (existing_values[i] if i < len(existing_values) else "")
                 for i in range(len(columns))
             ]
-            # Normalize numeric cells so "800000" == "800000.00" — Sheets
-            # rewrites our written floats as bare integers when the fraction
-            # is zero, which would otherwise make every numeric column read
-            # as "updated" on every no-op re-run.
-            if [_normalize(v) for v in existing_trimmed] == [_normalize(v) for v in new_values]:
+
+            existing_compare = [
+                _normalize(v) for i, v in enumerate(existing_trimmed) if i not in excluded_idxs
+            ]
+            new_compare = [
+                _normalize(v) for i, v in enumerate(new_values) if i not in excluded_idxs
+            ]
+            if existing_compare == new_compare:
                 unchanged += 1
                 continue
+
+            if created_at_idx >= 0:
+                new_values[created_at_idx] = (
+                    existing_trimmed[created_at_idx] or run_ts
+                )
+            if updated_at_idx >= 0:
+                new_values[updated_at_idx] = run_ts
+
             update_data.append({
                 "range": f"'{tab}'!A{sheet_row}:{last_col_letter}{sheet_row}",
                 "values": [new_values],
             })
             updated += 1
         else:
+            if created_at_idx >= 0:
+                new_values[created_at_idx] = run_ts
+            if updated_at_idx >= 0:
+                new_values[updated_at_idx] = run_ts
             new_rows.append(new_values)
             appended += 1
 
     if update_data:
-        # batchUpdate handles many ranges in one call — much faster than
-        # per-row updates when hundreds of ledgers change.
         svc.spreadsheets().values().batchUpdate(
             spreadsheetId=sheet_id,
-            body={"valueInputOption": "USER_ENTERED", "data": update_data},
+            body={"valueInputOption": "RAW", "data": update_data},
         ).execute()
 
     if new_rows:
         svc.spreadsheets().values().append(
             spreadsheetId=sheet_id,
             range=f"'{tab}'!A1",
-            valueInputOption="USER_ENTERED",
+            valueInputOption="RAW",
             insertDataOption="INSERT_ROWS",
             body={"values": new_rows},
         ).execute()

@@ -39,7 +39,7 @@ import requests
 from dotenv import load_dotenv
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from _schema import Column, load_columns, load_companies, load_sales_persons  # noqa: E402
+from _schema import Column, load_columns, load_companies, load_excluded_ledgers, load_opening_overrides, load_sales_persons  # noqa: E402
 
 from list_tally_companies import list_companies  # noqa: E402
 
@@ -210,13 +210,39 @@ def _dr_cr(raw: str) -> str:
     return ""
 
 
-def ledger_to_row(led: ET.Element, company: str, location: str, sales_persons: dict[str, str], unmapped_sp: set[str]) -> dict[str, Any]:
+def ledger_to_row(led: ET.Element, company: str, location: str, sales_persons: dict[str, str], unmapped_sp: set[str], apr25_mode: str = "", opening_overrides: dict[tuple[str, str, str], tuple[str, str]] | None = None) -> dict[str, Any]:
     name = (led.attrib.get("NAME") or _t(led.find("NAME"))).strip()
     sp = sales_persons.get(name, "")
     if not sp:
         unmapped_sp.add(name)
     ob_raw = _t(led.find("OPENINGBALANCE"))
     cb_raw = _t(led.find("CLOSINGBALANCE"))
+    # FY-rollover continuation books (apr25_opening=zero in companies.md): their
+    # Tally OPENINGBALANCE is the carried-forward FY26 opening, not a true
+    # 1-Apr-2025 opening — force Apr-25 to 0 so it isn't phantom-counted. Apr-26
+    # (closing) is left intact. See companies.md drift note + load_companies().
+    if apr25_mode == "zero":
+        ob_raw = "0"
+    # Per-ledger override (reference/opening_overrides.md) WINS over the blanket
+    # zero: a specific ledger whose real 1-Apr-2025 opening can't be read from
+    # the synced book (e.g. settled by FY26 so the continuation book reads 0).
+    # The override carries an absolute amount + Dr/Cr, written directly below.
+    override = (opening_overrides or {}).get((company, location, name.upper()))
+    if override is not None:
+        amt, drcr = override
+        return {
+            "company": company,
+            "location": location,
+            "name": name,
+            "sales_person": sp,
+            "credit_period": _t(led.find("BILLCREDITPERIOD")),
+            "credit_limit": _abs_amount(_t(led.find("CREDITLIMIT"))),
+            "opening_apr_25": _abs_amount(amt),
+            "opening_apr_25_type": drcr,
+            "opening_apr_26": _abs_amount(cb_raw),
+            "opening_apr_26_type": _dr_cr(cb_raw),
+            "ledger_id": _t(led.find("GUID")),
+        }
     return {
         "company": company,
         "location": location,
@@ -264,6 +290,8 @@ def main() -> int:
     columns = load_columns()
     company_map = load_companies()
     sales_persons = load_sales_persons()
+    opening_overrides = load_opening_overrides()
+    excluded_ledgers = load_excluded_ledgers()
 
     loaded = list_companies(host)
     if not loaded:
@@ -285,7 +313,7 @@ def main() -> int:
 
     for raw_company in target_companies:
         if raw_company in company_map:
-            display_company, location = company_map[raw_company]
+            display_company, location, apr25_mode = company_map[raw_company]
         else:
             if raw_company not in warned_company:
                 print(
@@ -295,7 +323,7 @@ def main() -> int:
                     file=sys.stderr,
                 )
                 warned_company.add(raw_company)
-            display_company, location = raw_company, ""
+            display_company, location, apr25_mode = raw_company, "", ""
 
         groups = fetch_groups(host, raw_company)
         sd_set = descendants_of(groups, SUNDRY_DEBTORS_ROOT)
@@ -305,11 +333,16 @@ def main() -> int:
         for led in ledgers:
             parent = _t(led.find("PARENT"))
             if parent in sd_set:
-                row = ledger_to_row(led, display_company, location, sales_persons, unmapped_sp)
+                row = ledger_to_row(led, display_company, location, sales_persons, unmapped_sp, apr25_mode, opening_overrides)
                 # Drop empty-name rows (defensive — shouldn't happen).
-                if row["name"]:
-                    all_rows.append(row)
-                    kept += 1
+                if not row["name"]:
+                    continue
+                # Skip non-debtor ledgers that leak in under Sundry Debtors
+                # (GL accruals / control accounts — see excluded_ledgers.md).
+                if (display_company, location, row["name"].upper()) in excluded_ledgers:
+                    continue
+                all_rows.append(row)
+                kept += 1
         per_company_counts[f"{display_company} / {location}"] = kept
 
     if unmapped_sp:

@@ -155,6 +155,8 @@ def fetch_ledger_bills(host: str, company: str, ledger: str, as_of_yyyymmdd: str
     )
     r = requests.post(host, data=body.encode("utf-8"), timeout=timeout)
     r.raise_for_status()
+    if not r.content.strip():   # Tally returns an empty 200 body for ledgers with no open bills.
+        return []
     root = ET.fromstring(_san(r.content))
     bills: list[dict] = []
     cur: dict | None = None
