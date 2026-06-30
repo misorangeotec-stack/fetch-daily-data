@@ -348,7 +348,10 @@ def _upsert_by_voucher(
             to_delete.extend(gi for (gi, _) in ex)    # changed → drop the stale rows for this voucher
         to_append.extend(brows)
 
-    append_rows(svc, sheet_id, tab, to_append)
+    # Delete BEFORE append. to_delete are row indices from the pre-modification
+    # snapshot; appending first (values().append + INSERT_ROWS) can land mid-sheet
+    # and shift those indices, so the deletes would hit the wrong rows (row churn /
+    # data loss). Delete on the untouched snapshot first, then append at the end.
     if to_delete:
         grid_id = _grid_id(svc, sheet_id, tab)
         ranges: list[list[int]] = []
@@ -360,6 +363,7 @@ def _upsert_by_voucher(
         reqs = [{"deleteDimension": {"range": {"sheetId": grid_id, "dimension": "ROWS",
                  "startIndex": s, "endIndex": e}}} for s, e in sorted(ranges, reverse=True)]
         svc.spreadsheets().batchUpdate(spreadsheetId=sheet_id, body={"requests": reqs}).execute()
+    append_rows(svc, sheet_id, tab, to_append)
     return {"appended": len(to_append), "deleted": len(to_delete)}
 
 

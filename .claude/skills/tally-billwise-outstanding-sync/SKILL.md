@@ -54,3 +54,10 @@ until refreshed.
 - Never whole-company bill/outstanding dumps.
 - Snapshot replace is scoped to the companies in the input — other scopes are
   preserved.
+- **Prior-year (inactive) books are skipped for bill-wise.** Companies whose
+  number is in `TALLY_INACTIVE_COMPANIES` (.env) are auto-skipped by both the
+  fetcher (`fetch_tally_billwise.py`) and the dashboard (`build_steps`), because a
+  frozen prior-FY book still lists open bills the LIVE book has since carried
+  forward (double-count) or seen paid (phantom) — see the FY-split note in
+  `reference/companies.md`. Flows/masters still sync from those books (history);
+  only bill-wise is blocked. Override on the fetcher with `--allow-inactive`.

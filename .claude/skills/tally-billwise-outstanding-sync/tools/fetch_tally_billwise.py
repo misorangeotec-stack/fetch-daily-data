@@ -174,6 +174,36 @@ def fetch_ledger_bills(host: str, company: str, ledger: str, as_of_yyyymmdd: str
     return [b for b in bills if b["bill_ref"] and abs(b["amount"]) > 0.01]
 
 
+def inactive_book_names(raw_companies: list[str]) -> set[str]:
+    """Subset of raw_companies that are PRIOR-YEAR (inactive) books — their Tally
+    company number is listed in TALLY_INACTIVE_COMPANIES in the project .env.
+
+    Bill-wise outstanding must skip these: a prior-year book is frozen at its FY
+    close, so it still lists open bills the LIVE book has since either carried
+    forward (→ counted twice) or seen paid (→ resurrected as a phantom). The live
+    book alone is the current truth. Flows/masters are unaffected — their own
+    fetchers never call this, so last-year history stays fetchable from these books.
+    Resolved from .env (TALLY_CO_<key>_NAME/_NUMBER pairs + TALLY_INACTIVE_COMPANIES).
+    """
+    try:
+        from dotenv import dotenv_values
+        vals = dotenv_values(Path(__file__).resolve().parents[4] / ".env")
+    except Exception:
+        return set()
+    inactive_nums = {n.strip() for n in (vals.get("TALLY_INACTIVE_COMPANIES") or "").split(",") if n.strip()}
+    if not inactive_nums:
+        return set()
+    names: dict[str, str] = {}
+    numbers: dict[str, str] = {}
+    for key, value in vals.items():
+        m = re.match(r"^TALLY_CO_(.+)_(NAME|NUMBER)$", key or "")
+        if not m or not value:
+            continue
+        (names if m.group(2) == "NAME" else numbers)[m.group(1)] = value.strip()
+    name_to_num = {nm: numbers[k] for k, nm in names.items() if k in numbers}
+    return {raw for raw in raw_companies if name_to_num.get(raw) in inactive_nums}
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description="Fetch per-ledger bill-wise outstanding (BILLCL) from Tally.")
     ap.add_argument("--companies", default="", help="Comma-separated raw Tally company names. Blank = all loaded.")
@@ -181,6 +211,10 @@ def main() -> int:
     ap.add_argument("--as-of", default="", help="Snapshot date YYYY-MM-DD (default: today).")
     ap.add_argument("--delay", type=float, default=0.2, help="Seconds between per-ledger requests (crash guard).")
     ap.add_argument("--timeout", type=int, default=30)
+    ap.add_argument("--allow-inactive", action="store_true",
+                    help="Also fetch bill-wise for prior-year (inactive) books listed in "
+                         "TALLY_INACTIVE_COMPANIES. NOT recommended — their carried-forward "
+                         "bills double-count the live book.")
     args = ap.parse_args()
 
     load_dotenv()
@@ -197,6 +231,17 @@ def main() -> int:
         raw_companies = [c.strip() for c in args.companies.split(",") if c.strip()]
     else:
         raw_companies = list_companies(host)
+
+    # Guard: bill-wise must NEVER fetch prior-year (inactive) books — their frozen
+    # carried-forward bills double-count the live book (a still-open bill twice; a
+    # since-paid bill as a phantom). Skip them unless explicitly overridden.
+    if not args.allow_inactive:
+        _skip = inactive_book_names(raw_companies)
+        for _s in sorted(_skip):
+            print(f"WARNING: skipping bill-wise for INACTIVE prior-year book '{_s}' — its "
+                  f"carried-forward bills double-count the live book. Pass --allow-inactive to override.",
+                  file=sys.stderr)
+        raw_companies = [c for c in raw_companies if c not in _skip]
 
     rows: list[dict[str, Any]] = []
     summary_companies: list[dict] = []

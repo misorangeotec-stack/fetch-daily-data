@@ -26,10 +26,12 @@ sheets fed by Tally share the same `(Company, Location)` keys. Don't drift
 without updating the other skills together — joining or VLOOKUP-ing across
 sheets depends on this consistency.
 
-| tally_name                                                       | company    | location |
-|------------------------------------------------------------------|------------|----------|
-| ORANGE O TEC ENTERPRISES PRIVATE LIMITED-NOIDA -FY 26-27 | Enterprise | Noida    |
-| ORANGE O TEC ENTERPRISES PVT LTD - FY24-26               | Enterprise | Surat    |
-| ORANGE O TEC PRIVATE LIMITED (01-04-25TO31-03-27)                | O-tec      | Surat    |
-| ORANGE O TEC PRIVATE LIMITED-NOIDA-(from 1-Apr-25)               | O-tec      | Noida    |
-| COLORIX DIGITAL PRINTING SOLUTIONS LLP - (from 1-Apr-20) | Colorix    | Surat    |
+| tally_name                                                                         | company    | location | tally_no |
+|------------------------------------------------------------------------------------|------------|----------|----------|
+| ORANGE O TEC ENTERPRISES PVT LTD(F.Y.2026-27)                                      | Enterprise | Surat    | 100026   |
+| ORANGE O TEC ENTERPRISES PVT LTD(F.Y.2024-26)                                      | Enterprise | Surat    | 102426   |
+| ORANGE O TEC ENTERPRISES PRIVATE LIMITED-NOIDA -FY 26-27                           | Enterprise | Noida    | 100008   |
+| ORANGE O TEC ENTERPRISES PRIVATE LIMITED-NOIDA - FY25-26                           | Enterprise | Noida    | 100022   |
+| ORANGE O TEC PRIVATE LIMITED (01-04-25TO31-03-27)                                  | O-tec      | Surat    | 100011   |
+| ORANGE O TEC PRIVATE LIMITED-NOIDA-(from 1-Apr-25)                                 | O-tec      | Noida    | 100000   |
+| COLORIX DIGITAL PRINTING SOLUTIONS LLP - (from 1-Apr-20)                           | Colorix    | Surat    | 010021   |

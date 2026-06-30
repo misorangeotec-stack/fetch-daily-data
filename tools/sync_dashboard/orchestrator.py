@@ -188,15 +188,41 @@ class MasterPlan:
 
 # ---- step builder ------------------------------------------------------------------------------
 
-def build_steps(state: dict[str, Any], plans: list[MasterPlan], companies: list[str], today: date | None = None) -> list[Step]:
+def build_steps(
+    state: dict[str, Any],
+    plans: list[MasterPlan],
+    companies: list[str],
+    today: date | None = None,
+    billwise_skip_companies: set[str] | None = None,
+) -> list[Step]:
     if today is None:
         today = state_mod.now_ist().date()
+
+    # Bill-wise Outstanding must NEVER run for prior-year (inactive) books: their
+    # carried-forward open bills double-count against the LIVE book, which already
+    # carries those same bills forward (a still-open bill would be counted twice, and
+    # a since-paid bill would be resurrected as a phantom). So even if an inactive book
+    # is selected, we skip ONLY the bill-wise master for it — its flows / credit-limit /
+    # ledger-master still sync (voucher-deduped / name-upserted), so last-year history
+    # stays available. Inactive = number in TALLY_INACTIVE_COMPANIES (see companies.md).
+    if billwise_skip_companies is None:
+        try:
+            from tally_companies import inactive_company_numbers, company_number_map
+            _inactive_nums = inactive_company_numbers()
+            _num_map = company_number_map()
+            billwise_skip_companies = {c for c in companies if _num_map.get(c) in _inactive_nums}
+        except Exception:
+            billwise_skip_companies = set()
+
     steps: list[Step] = []
     fy_start = fy_start_for(today)
 
     for plan in plans:
         m = MASTERS[plan.master]
         for company in companies:
+            if plan.master == "billwise" and company in billwise_skip_companies:
+                # Prior-year/inactive book — bill-wise would double-count; skip it.
+                continue
             if not m.date_range:
                 # Master snapshot — single fetch + single push, no date args.
                 tmp_in = _tmp_path(m, company, "snap")
